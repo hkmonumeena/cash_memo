@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "389443520091",
+    "project_id": "cash-entery",
+    "storage_bucket": "cash-entery.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:389443520091:android:709bda98e683061dd6e17e",
+        "android_client_info": {
+          "package_name": "com.ruchitech.cashentery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQc_U9ALkQu_X_T2hgSiXNxw1b-MyfMoo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

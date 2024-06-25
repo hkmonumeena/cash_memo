@@ -1,0 +1,13 @@
+package com.ruchitech.cashentery.helper.navigation
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+sealed class Screen {
+
+    @Serializable
+    data object MobileAuth : Screen()
+
+    @Serializable
+    data object AddTransaction : Screen()
+}
