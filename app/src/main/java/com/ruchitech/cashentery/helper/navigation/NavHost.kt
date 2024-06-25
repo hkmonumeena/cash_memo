@@ -9,10 +9,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionUi
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionViewModel
 import com.ruchitech.cashentery.ui.screens.mobile_auth.MobileAuthUi
 import com.ruchitech.cashentery.ui.screens.mobile_auth.MobileAuthViewModel
+import com.ruchitech.cashentery.ui.screens.mobile_auth.VerifyOtpUi
 
 @Composable
 fun NavigationComponent(
@@ -28,8 +30,19 @@ fun NavigationComponent(
     ) {
         composable<Screen.MobileAuth> {
             val viewModel = hiltViewModel<MobileAuthViewModel>()
-            MobileAuthUi(viewModel)
+            MobileAuthUi(viewModel, onCodeSent = {
+                navHostController.navigate(Screen.VerifyOtp(it))
+            })
         }
+
+        composable<Screen.VerifyOtp> {
+            val viewModel = hiltViewModel<MobileAuthViewModel>()
+            val args = it.toRoute<Screen.VerifyOtp>()
+            VerifyOtpUi(viewModel, onAuthenticated = {
+                navHostController.navigate(Screen.AddTransaction)
+            },args.verificationId)
+        }
+
         composable<Screen.AddTransaction> {
             val viewModel = hiltViewModel<AddTransactionViewModel>()
             AddTransactionUi(viewModel)

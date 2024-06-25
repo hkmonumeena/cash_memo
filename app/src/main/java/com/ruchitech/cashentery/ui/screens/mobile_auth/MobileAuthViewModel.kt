@@ -27,7 +27,18 @@ class MobileAuthViewModel @Inject constructor(
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    private var verificationId: String? = null
+     var verificationId: String? = null
+
+    var mobileNumber = mutableStateOf("")
+    val filledOtp = mutableStateOf("")
+    fun validationCheck() {
+        if (filledOtp.value.length < 6) {
+            myToast.showToast("कृपया 6 अंकों का ओटीपी दर्ज करें")
+            return
+        } else {
+            verifyOtp(filledOtp.value)
+        }
+    }
 
     fun sendOtp(phoneNumber: String, context: Context) {
         _authState.value = AuthState.Loading
@@ -51,6 +62,7 @@ class MobileAuthViewModel @Inject constructor(
                 ) {
                     this@MobileAuthViewModel.verificationId = verificationId
                     _authState.value = AuthState.CodeSent
+
                 }
             })
             .build()

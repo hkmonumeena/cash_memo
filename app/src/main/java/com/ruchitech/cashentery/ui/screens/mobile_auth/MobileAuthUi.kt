@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,20 +37,40 @@ import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfSemibold
 
 @Composable
-fun MobileAuthUi(viewModel: MobileAuthViewModel) {
+fun MobileAuthUi(viewModel: MobileAuthViewModel, onCodeSent: (verificationId: String?) -> Unit) {
     var amount by remember { mutableStateOf("") }
+    val state by viewModel.authState.collectAsState()
+    when (state) {
+        MobileAuthViewModel.AuthState.Authenticated -> {}
+        MobileAuthViewModel.AuthState.CodeSent -> {
+            onCodeSent(viewModel.verificationId)
+        }
+
+        is MobileAuthViewModel.AuthState.Error -> {}
+        MobileAuthViewModel.AuthState.Idle -> {}
+        MobileAuthViewModel.AuthState.Loading -> {}
+    }
     val amountFocus = remember {
         FocusRequester()
     }
     val context = LocalContext.current
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White), contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
                 "Mobile Number",
                 fontFamily = montserrat_semibold,
                 fontSize = 10.sp.nonScaledSp,
-                color = Color(0xFF858585)
+                color = Color(0xFF858585),
+                modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(5.dp))
             BasicTextField(
                 value = amount,
                 onValueChange = {
@@ -63,9 +84,8 @@ fun MobileAuthUi(viewModel: MobileAuthViewModel) {
                 }),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp, top = 5.dp)
                     .background(Color.Gray.copy(alpha = 0.1f), shape = RoundedCornerShape(5.dp))
-                    .padding(8.dp)
+                    .padding(14.dp)
                     .focusRequester(amountFocus)
                     .onFocusChanged { },
                 textStyle = TextStyle(
@@ -76,7 +96,7 @@ fun MobileAuthUi(viewModel: MobileAuthViewModel) {
             )
             Spacer(modifier = Modifier.height(15.dp))
             Button(onClick = {
-                viewModel.sendOtp(amount,context)
+                viewModel.sendOtp(amount, context)
             }) {
                 Text(text = "Get OTP", fontFamily = sfSemibold, fontSize = 12.sp.nonScaledSp)
             }
