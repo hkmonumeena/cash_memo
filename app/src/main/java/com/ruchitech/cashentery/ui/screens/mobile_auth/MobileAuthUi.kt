@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.mobile_auth
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +14,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,18 +41,23 @@ import com.ruchitech.cashentery.ui.theme.sfSemibold
 
 @Composable
 fun MobileAuthUi(viewModel: MobileAuthViewModel, onCodeSent: (verificationId: String?) -> Unit) {
-    var amount by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("+919131414139") }
     val state by viewModel.authState.collectAsState()
-    when (state) {
-        MobileAuthViewModel.AuthState.Authenticated -> {}
-        MobileAuthViewModel.AuthState.CodeSent -> {
-            onCodeSent(viewModel.verificationId)
-        }
+    LaunchedEffect(state) {
+        Log.e("gkfdgjmldf", "Mobile Auth $state")
+        when (state) {
+            MobileAuthViewModel.AuthState.Authenticated -> {}
+            MobileAuthViewModel.AuthState.CodeSent -> {
+                onCodeSent(viewModel.verificationId)
+                viewModel.changeState()
+            }
 
-        is MobileAuthViewModel.AuthState.Error -> {}
-        MobileAuthViewModel.AuthState.Idle -> {}
-        MobileAuthViewModel.AuthState.Loading -> {}
+            is MobileAuthViewModel.AuthState.Error -> {}
+            MobileAuthViewModel.AuthState.Idle -> {}
+            MobileAuthViewModel.AuthState.Loading -> {}
+        }
     }
+
     val amountFocus = remember {
         FocusRequester()
     }
@@ -95,9 +103,10 @@ fun MobileAuthUi(viewModel: MobileAuthViewModel, onCodeSent: (verificationId: St
                 )
             )
             Spacer(modifier = Modifier.height(15.dp))
-            Button(onClick = {
-                viewModel.sendOtp(amount, context)
-            }) {
+            if (state is MobileAuthViewModel.AuthState.Loading) CircularProgressIndicator() else Button(
+                onClick = {
+                    viewModel.sendOtp(amount, context)
+                }) {
                 Text(text = "Get OTP", fontFamily = sfSemibold, fontSize = 12.sp.nonScaledSp)
             }
             Spacer(modifier = Modifier.height(15.dp))

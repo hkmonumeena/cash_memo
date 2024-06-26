@@ -19,14 +19,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,25 +46,15 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun VerifyOtpUi(
-    viewModel: MobileAuthViewModel,
+    viewModel: VerifyOtpViewModel,
     onAuthenticated: () -> Unit,
     verificationId: String?,
 ) {
-    val state by viewModel.authState.collectAsState()
-    viewModel.verificationId = verificationId
-    when (state) {
-        MobileAuthViewModel.AuthState.Authenticated -> {
-            onAuthenticated()
-        }
-
-        MobileAuthViewModel.AuthState.CodeSent -> {
-            //onCodeSent(viewModel.verificationId)
-        }
-
-        is MobileAuthViewModel.AuthState.Error -> {}
-        MobileAuthViewModel.AuthState.Idle -> {}
-        MobileAuthViewModel.AuthState.Loading -> {}
+//    val state by viewModel.authState.collectAsState()
+    LaunchedEffect(true) {
+        viewModel.verificationId = verificationId
     }
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier
@@ -120,30 +107,28 @@ fun VerifyOtpUi(
                 )
             )
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
             ) {
                 (0 until otpLength).map { index ->
                     viewModel.filledOtp.value = editValue
-                    OtpCell(
-                        modifier = Modifier
-                            .size(45.dp)
-                            .onFocusChanged {
-                                focusRequester.requestFocus()
-                            }
-                            .clickable {
-                                //   focusRequester.requestFocus()
-                                keyboard?.show()
-                            }
-                            .border(1.dp, Color.DarkGray),
+                    OtpCell(modifier = Modifier
+                        .size(45.dp)
+                        .onFocusChanged {
+                            focusRequester.requestFocus()
+                        }
+                        .clickable {
+                            //   focusRequester.requestFocus()
+                            keyboard?.show()
+                        }
+                        .border(1.dp, Color.DarkGray),
                         value = editValue.getOrNull(index)?.toString() ?: "",
-                        isCursorVisible = editValue.length == index
-                    )
+                        isCursorVisible = editValue.length == index)
                     Spacer(modifier = Modifier.size(8.dp))
                 }
             }
 
             Spacer(modifier = Modifier.height(25.dp))
+
             Button(
                 onClick = {
                     viewModel.validationCheck()
@@ -155,9 +140,12 @@ fun VerifyOtpUi(
             ) {
                 Text("Verify Otp", color = Color.White)
             }
+
+
         }
         if (viewModel.showLoading.value) {
-            CircularProgressIndicator()
+            onAuthenticated()
+            viewModel.showLoading.value = false
         }
     }
 

@@ -14,9 +14,9 @@ class AppPreference(context: Context) : PreferenceConfig(context) {
         get() = getPreference(IS_LOGIN, PrefConfig.BooleanValue())
         set(value) = setPreference(IS_LOGIN, PrefConfig.BooleanValue(value))
 
-    var userId: Long?
-        get() = getPreference(USER_ID, PrefConfig.LongValue())
-        set(value) = setPreference(USER_ID, PrefConfig.LongValue(value))
+    var userId: String?
+        get() = getPreference(USER_ID, PrefConfig.StringValue())
+        set(value) = setPreference(USER_ID, PrefConfig.StringValue(value))
 
     var password: String?
         get() = getPreference(PASSWORD, PrefConfig.StringValue())

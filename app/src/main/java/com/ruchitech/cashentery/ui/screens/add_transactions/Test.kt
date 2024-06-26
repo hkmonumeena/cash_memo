@@ -55,9 +55,6 @@ import java.util.UUID
 fun AddTransactionUi(viewModel: AddTransactionViewModel) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         AddTransactionScreen(viewModel)
-        if (viewModel.showLoading.value) {
-            CircularProgressIndicator()
-        }
     }
 }
 

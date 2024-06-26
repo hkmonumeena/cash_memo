@@ -12,5 +12,7 @@ sealed class Screen {
     data class VerifyOtp(val verificationId: String?) : Screen()
 
     @Serializable
+    data object Home : Screen()
+    @Serializable
     data object AddTransaction : Screen()
 }

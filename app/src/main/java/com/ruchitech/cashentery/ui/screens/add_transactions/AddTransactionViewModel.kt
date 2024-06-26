@@ -1,8 +1,10 @@
 package com.ruchitech.cashentery.ui.screens.add_transactions
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.FirebaseDatabase
+import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.tasks.await
@@ -12,23 +14,29 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddTransactionViewModel @Inject constructor(
-    private val myToast: MyToast
+    private val myToast: MyToast,
+    private val appPreference: AppPreference,
 ) : ViewModel() {
     val showLoading = mutableStateOf(false)
-    fun addTrans(addNewTransaction: AddTransaction) {
-        val mainCategory = MainCategory(id = 1L, name = "Income")
-        val subCategory = SubCategory(id = 1L, name = "Salary")
 
-        val transaction = AddTransaction(
-            date = "2023-06-23",
-            type = Type.CREDIT,
-            account = Account.ONLINE,
-            transactionNumber = "TXN123456",
-            amount = 1000.0,
-            remarks = "Monthly salary",
-            mainCategory = mainCategory,
-            subCategory = subCategory
-        )
+    init {
+        Log.e("kiihgfh", "${appPreference.userId}")
+    }
+
+    fun addTrans(addNewTransaction: AddTransaction) {
+        /*        val mainCategory = MainCategory(id = 1L, name = "Income")
+                val subCategory = SubCategory(id = 1L, name = "Salary")
+
+                val transaction = AddTransaction(
+                    date = "2023-06-23",
+                    type = Type.CREDIT,
+                    account = Account.ONLINE,
+                    transactionNumber = "TXN123456",
+                    amount = 1000.0,
+                    remarks = "Monthly salary",
+                    mainCategory = mainCategory,
+                    subCategory = subCategory
+                )*/
 
         storeTransaction(addNewTransaction)
     }
@@ -37,8 +45,9 @@ class AddTransactionViewModel @Inject constructor(
     private fun storeTransaction(transaction: AddTransaction) {
         showLoading.value = true
         val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("transactions")
+        val myRef = database.getReference("transactions").child(appPreference.userId ?: "")
         val transactionId = myRef.push().key // Generate a unique ID for the transaction
+
         if (transactionId != null) {
             val transactionWithId = transaction.copy(id = transactionId)
             val jsonString = Json.encodeToString(transactionWithId)

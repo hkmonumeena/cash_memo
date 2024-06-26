@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
-class MobileAuthViewModel @Inject constructor(
+class VerifyOtpViewModel @Inject constructor(
     private val myToast: MyToast,
      val appPreference: AppPreference,
 ) : ViewModel() {
@@ -34,9 +34,7 @@ class MobileAuthViewModel @Inject constructor(
     var mobileNumber = mutableStateOf("")
     val filledOtp = mutableStateOf("")
 
-fun changeState(){
-    _authState.value = AuthState.Idle
-}
+
 
     fun validationCheck() {
         if (filledOtp.value.length < 6) {
@@ -67,7 +65,7 @@ fun changeState(){
                     verificationId: String,
                     token: PhoneAuthProvider.ForceResendingToken,
                 ) {
-                    this@MobileAuthViewModel.verificationId = verificationId
+                    this@VerifyOtpViewModel.verificationId = verificationId
                     _authState.value = AuthState.CodeSent
 
                 }
@@ -93,6 +91,7 @@ fun changeState(){
                     _authState.value = AuthState.Authenticated
                     appPreference.userId = auth.uid
                     appPreference.isUserLoggedIn = true
+                    showLoading.value = true
                 } else {
                     _authState.value =
                         AuthState.Error(task.exception?.message ?: "Authentication failed")
