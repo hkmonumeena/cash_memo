@@ -22,9 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import java.text.NumberFormat
 import java.util.Locale
@@ -63,7 +65,7 @@ fun SumCountCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowForward,
+                    painterResource(id = R.drawable.ic_arrow),
                     contentDescription = null,
                     modifier = Modifier
                         .rotate(rotationIcon)

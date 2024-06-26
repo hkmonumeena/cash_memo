@@ -28,7 +28,7 @@ fun NavigationComponent(
 ) {
     NavHost(
         navController = navHostController,
-        startDestination = Screen.MobileAuth,
+        startDestination = Screen.Home,
         modifier = Modifier.padding(paddingValues)
     ) {
         composable<Screen.MobileAuth> {

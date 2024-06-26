@@ -17,7 +17,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -76,7 +75,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
     var remarks by remember { mutableStateOf("") }
     var fromAccount by remember { mutableStateOf("Online") }
     var category by remember { mutableStateOf("") }
-    var subCategory by remember { mutableStateOf("") }
+    var tag by remember { mutableStateOf("") }
     val amountFocus = remember {
         FocusRequester()
     }
@@ -360,91 +359,94 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
 
 
         var mainCategory by remember { mutableStateOf(false) }
-        Text(
-            "Category",
-            fontFamily = montserrat_semibold,
-            fontSize = 10.sp.nonScaledSp,
-            color = Color(0xFF858585)
-        )
+        /*       Text(
+                   "Category",
+                   fontFamily = montserrat_semibold,
+                   fontSize = 10.sp.nonScaledSp,
+                   color = Color(0xFF858585)
+               )
 
-        Column {
-            BasicTextField(
-                value = category,
-                onValueChange = {
-                    category = it
-                    //addNewTransaction = addNewTransaction.copy(mainCategory = it)
-                },
-                enabled = false,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp, top = 5.dp)
-                    .background(Color.Gray.copy(alpha = 0.1f), shape = RoundedCornerShape(5.dp))
-                    .padding(8.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        mainCategory = true
+               Column {
+                   BasicTextField(
+                       value = category,
+                       onValueChange = {
+                           category = it
+                           //addNewTransaction = addNewTransaction.copy(mainCategory = it)
+                       },
+                       enabled = false,
+                       modifier = Modifier
+                           .fillMaxWidth()
+                           .padding(bottom = 16.dp, top = 5.dp)
+                           .background(Color.Gray.copy(alpha = 0.1f), shape = RoundedCornerShape(5.dp))
+                           .padding(8.dp)
+                           .clickable(
+                               interactionSource = remember { MutableInteractionSource() },
+                               indication = null
+                           ) {
+                               mainCategory = true
 
-                    },
-                textStyle = TextStyle(
-                    color = Color(0xFF323232),
-                    fontFamily = montserrat_semibold,
-                    fontSize = 12.sp.nonScaledSp
-                )
-            )
+                           },
+                       textStyle = TextStyle(
+                           color = Color(0xFF323232),
+                           fontFamily = montserrat_semibold,
+                           fontSize = 12.sp.nonScaledSp
+                       )
+                   )
 
-            DropdownMenu(
-                expanded = mainCategory,
-                onDismissRequest = { mainCategory = false },
-                offset = DpOffset(
-                    0.dp, (-12).dp
-                )
-            ) {
-                DropdownMenuItem(text = {
-                    Text(
-                        text = "Groceries",
-                        fontFamily = montserrat_semibold,
-                        fontSize = 11.sp.nonScaledSp
-                    )
-                }, onClick = {
-                    category = "Groceries"
-                    mainCategory = false
-                })
-                DropdownMenuItem(text = {
-                    Text(
-                        text = "Fuel",
-                        fontFamily = montserrat_semibold,
-                        fontSize = 11.sp.nonScaledSp
-                    )
-                }, onClick = {
-                    category = "Fuel"
-                    mainCategory = false
-                })
-                DropdownMenuItem(text = {
-                    Text(
-                        text = "Bills",
-                        fontFamily = montserrat_semibold,
-                        fontSize = 11.sp.nonScaledSp
-                    )
-                }, onClick = {
-                    category = "Bills"
-                    mainCategory = false
-                })
-            }
-        }
+                   DropdownMenu(
+                       expanded = mainCategory,
+                       onDismissRequest = { mainCategory = false },
+                       offset = DpOffset(
+                           0.dp, (-12).dp
+                       )
+                   ) {
+                       DropdownMenuItem(text = {
+                           Text(
+                               text = "Groceries",
+                               fontFamily = montserrat_semibold,
+                               fontSize = 11.sp.nonScaledSp
+                           )
+                       }, onClick = {
+                           category = "Groceries"
+                           mainCategory = false
+                       })
+                       DropdownMenuItem(text = {
+                           Text(
+                               text = "Fuel",
+                               fontFamily = montserrat_semibold,
+                               fontSize = 11.sp.nonScaledSp
+                           )
+                       }, onClick = {
+                           category = "Fuel"
+                           mainCategory = false
+                       })
+                       DropdownMenuItem(text = {
+                           Text(
+                               text = "Bills",
+                               fontFamily = montserrat_semibold,
+                               fontSize = 11.sp.nonScaledSp
+                           )
+                       }, onClick = {
+                           category = "Bills"
+                           mainCategory = false
+                       })
+                   }
+               }*/
 
 
         // Sub Category
         Text(
-            "Sub Category",
+            "Tag",
             fontFamily = montserrat_semibold,
             fontSize = 10.sp.nonScaledSp,
             color = Color(0xFF858585)
         )
         BasicTextField(
-            value = subCategory,
-            onValueChange = { subCategory = it },
+            value = tag,
+            onValueChange = {
+                tag = it
+                addNewTransaction = addNewTransaction.copy(tag = it)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp, top = 5.dp)

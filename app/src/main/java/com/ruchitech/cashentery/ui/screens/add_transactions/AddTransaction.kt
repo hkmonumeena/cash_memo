@@ -31,6 +31,7 @@ data class AddTransaction(
     val transactionNumber: String? = null,
     val amount: Double? = null,
     val remarks: String? = null,
-    val mainCategory: MainCategory? = null,
-    val subCategory: SubCategory? = null,
+    val tag: String? = null,
+    /*    val mainCategory: MainCategory? = null,
+        val subCategory: SubCategory? = null,*/
 )
