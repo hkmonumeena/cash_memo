@@ -26,6 +26,7 @@ data class SubCategory(
 data class AddTransaction(
     val id: String? = null,
     val date: String? = null,
+    val timeInMiles: Long? = null,
     val type: Type? = null, //CREDIT, DEBIT
     val account: Account? = null,// ONLINE,CASH
     val transactionNumber: String? = null,

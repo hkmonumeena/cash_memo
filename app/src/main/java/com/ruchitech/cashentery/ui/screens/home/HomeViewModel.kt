@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransaction
+import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,10 +14,19 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val appPreference: AppPreference
+    private val appPreference: AppPreference,
 ) : ViewModel() {
     private val _transactionsFlow = MutableStateFlow<List<AddTransaction>>(emptyList())
     val transactionsFlow: StateFlow<List<AddTransaction>> = _transactionsFlow
+
+    private val _groupByTag = MutableStateFlow<Map<String?, List<AddTransaction>>?>(null)
+    val groupByTag: StateFlow<Map<String?, List<AddTransaction>>?> = _groupByTag
+
+    private val _sumOfExpense = MutableStateFlow<Double?>(0.0)
+    val sumOfExpense: StateFlow<Double?> = _sumOfExpense
+
+    private val _sumOfIncome = MutableStateFlow<Double?>(0.0)
+    val sumOfIncome: StateFlow<Double?> = _sumOfIncome
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
@@ -26,7 +36,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun fetchTransactions() {
-        val userId =  "W5mzbR4YFSTClH6Tsf28LilEH9d2" //auth.currentUser?.uid
+        val userId = "W5mzbR4YFSTClH6Tsf28LilEH9d2" //auth.currentUser?.uid
 
         if (userId == null) {
             println("User is not authenticated.")
@@ -46,7 +56,17 @@ class HomeViewModel @Inject constructor(
                     transactions.add(transaction)
                 }
             }
-            _transactionsFlow.value = transactions
+            _sumOfExpense.value =
+                transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+
+            _sumOfIncome.value =
+                transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
+
+            _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+            _groupByTag.value = transactions.groupBy { it.tag }.mapValues { entry ->
+                entry.value.sortedByDescending { it.timeInMiles }
+            }
+
         }.addOnFailureListener { e ->
             println("Error retrieving transactions: ${e.message}")
             _transactionsFlow.value = emptyList()

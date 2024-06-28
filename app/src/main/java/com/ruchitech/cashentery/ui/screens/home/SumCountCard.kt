@@ -43,6 +43,7 @@ fun SumCountCard(
     iconBg: Color,
     iconTint: Color,
     rotationIcon: Float,
+    amount: Double
 ) {
     Card(
         onClick = { },
@@ -77,7 +78,7 @@ fun SumCountCard(
         }
 
         Text(
-            text = formatToINR(31205.0),
+            text = formatToINR(amount),
             fontSize = 16.sp.nonScaledSp,
             color = Color.Black,
             modifier = Modifier.padding(horizontal = 16.dp),

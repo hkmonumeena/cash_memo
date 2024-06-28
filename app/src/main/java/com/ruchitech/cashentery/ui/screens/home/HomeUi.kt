@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -39,7 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransaction
+import com.ruchitech.cashentery.ui.screens.add_transactions.Type
+import com.ruchitech.cashentery.ui.theme.Expense
+import com.ruchitech.cashentery.ui.theme.Income
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
+import com.ruchitech.cashentery.ui.theme.sfSemibold
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -65,7 +68,9 @@ fun formatDateTime(originalDateString: String): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () -> Unit) {
-    val transactions by viewModel.transactionsFlow.collectAsState()
+    val transactions by viewModel.groupByTag.collectAsState()
+    val sumOfIncome by viewModel.sumOfIncome.collectAsState()
+    val sumOfExpense by viewModel.sumOfExpense.collectAsState()
 
     Scaffold(
         topBar = {
@@ -98,7 +103,7 @@ fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF6F7F9))
+                    .background(Color(0xFFEFEFF0))
                     .padding(padding)
             ) {
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -107,14 +112,16 @@ fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () 
                         "Received",
                         Color(0xFFDBF5DB),
                         Color(0xFF228B22),
-                        130F
+                        130F,
+                        sumOfIncome ?: 0.0
                     )
                     SumCountCard(
                         Modifier.weight(1F),
                         "Paid",
                         Color(0xFFFEECEC),
                         Color(0xFFB22222),
-                        320F
+                        320F,
+                        sumOfExpense ?: 0.0
                     )
                 }
                 Row(
@@ -149,24 +156,33 @@ fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () 
 }
 
 @Composable
-fun TransactionList(transactions: List<AddTransaction>) {
+fun TransactionList(transactions: Map<String?, List<AddTransaction>>?) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        items(transactions) { transaction ->
-            TransactionItem(transaction = transaction)
+
+        transactions?.forEach { (t, u) ->
+            if (u.isNotEmpty()) {
+                item {
+                    TransactionItem(transaction = u.first(), u)
+                }
+            }
+
         }
+        /*     items(transactions.) { transaction ->
+                 TransactionItem(transaction = transaction)
+             }*/
     }
 }
 
 @Composable
-fun TransactionItem(transaction: AddTransaction) {
+fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>) {
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .padding(horizontal = 0.dp, vertical = 5.dp)
             .background(Color.White, shape = RoundedCornerShape(5.dp)),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -200,29 +216,32 @@ fun TransactionItem(transaction: AddTransaction) {
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Last: ${formatDateTime(transaction.date ?: "2024-06-26, 16:32:54")}",
-                    fontSize = 10.sp.nonScaledSp,
+                    text = "last: ${transaction.date}",
+                    fontSize = 9.sp.nonScaledSp,
+                    fontFamily = sfSemibold,
                     color = Color.DarkGray
                 )
             }
 
         }
-        Text(
-            text = formatToINR(1325.0),
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp.nonScaledSp,
-            modifier = Modifier.padding(end = 10.dp)
-        )
-        /*
-                            Column {
 
-                                Text(
-                                    text = "Last: 25 June 2025",
-                                    fontSize = 11.sp.nonScaledSp,
-                                    color = Color.LightGray
-                                )
-                            }
-        */
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = formatToINR(u.sumOf { it.amount ?: 0.0 }),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp.nonScaledSp,
+                modifier = Modifier.padding(end = 10.dp)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "last was ${formatToINR(transaction.amount?:0.0)}",
+                fontSize = 9.sp.nonScaledSp,
+                fontFamily = sfSemibold,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (transaction.type == Type.CREDIT) Income else Expense,
+                modifier = Modifier.padding(end = 10.dp)
+            )
+        }
 
 
     }
