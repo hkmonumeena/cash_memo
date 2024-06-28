@@ -5,13 +5,24 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ruchitech.cashentery.helper.navigation.NavigationComponent
 import com.ruchitech.cashentery.ui.theme.CashEnteryTheme
@@ -25,8 +36,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             val snackbarHostState = remember { SnackbarHostState() }
+            val items = listOf("Home", "Transactions")
+            var selectedIndex by remember { mutableIntStateOf(0) }
             CashEnteryTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize(),
+                    floatingActionButton = {
+
+                    },
+                    floatingActionButtonPosition = FabPosition.Center,
+                    bottomBar = {}) { innerPadding ->
                     NavigationComponent(
                         navHostController = navController,
                         snackbarHostState = snackbarHostState,

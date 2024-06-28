@@ -18,6 +18,8 @@ import com.ruchitech.cashentery.ui.screens.mobile_auth.MobileAuthUi
 import com.ruchitech.cashentery.ui.screens.mobile_auth.MobileAuthViewModel
 import com.ruchitech.cashentery.ui.screens.mobile_auth.VerifyOtpUi
 import com.ruchitech.cashentery.ui.screens.mobile_auth.VerifyOtpViewModel
+import com.ruchitech.cashentery.ui.screens.transactions.TransactionUi
+import com.ruchitech.cashentery.ui.screens.transactions.TransactionsViewModel
 
 @Composable
 fun NavigationComponent(
@@ -66,7 +68,16 @@ fun NavigationComponent(
             val viewModel = hiltViewModel<HomeViewModel>()
             HomeUi(viewModel, navigateToAddTransaction = {
                 navHostController.navigate(Screen.AddTransaction)
+
+            }, navigateToTransactions = {
+                navHostController.navigate(Screen.Transactions)
             })
         }
+
+        composable<Screen.Transactions> {
+            val viewModel = hiltViewModel<TransactionsViewModel>()
+            TransactionUi(viewModel)
+        }
+
     }
 }

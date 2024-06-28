@@ -15,4 +15,7 @@ sealed class Screen {
     data object Home : Screen()
     @Serializable
     data object AddTransaction : Screen()
+
+    @Serializable
+    data object Transactions : Screen()
 }

@@ -1,49 +1,25 @@
-package com.ruchitech.cashentery.ui.screens.home
+package com.ruchitech.cashentery.ui.screens.transactions
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransaction
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.Json
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.Calendar
 import javax.inject.Inject
 
-fun formatMillisToDate(millis: Long): String {
-    val date = Date(millis)
-    val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    return formatter.format(date)
-}
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val appPreference: AppPreference,
-) : ViewModel() {
+class TransactionsViewModel @Inject constructor() : ViewModel() {
     private val _transactionsFlow = MutableStateFlow<List<AddTransaction>>(emptyList())
     val transactionsFlow: StateFlow<List<AddTransaction>> = _transactionsFlow
-
     private val _groupByTag = MutableStateFlow<Map<String?, List<AddTransaction>>?>(null)
     val groupByTag: StateFlow<Map<String?, List<AddTransaction>>?> = _groupByTag
 
-    private val _sumOfExpense = MutableStateFlow<Double?>(0.0)
-    val sumOfExpense: StateFlow<Double?> = _sumOfExpense
-
-    private val _sumOfIncome = MutableStateFlow<Double?>(0.0)
-    val sumOfIncome: StateFlow<Double?> = _sumOfIncome
-
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     init {
-        appPreference.userId = "W5mzbR4YFSTClH6Tsf28LilEH9d2"
-        fetchTransactions()
-    }
-
-    fun updateData(){
         fetchTransactions()
     }
 
@@ -68,20 +44,32 @@ class HomeViewModel @Inject constructor(
                     transactions.add(transaction)
                 }
             }
-            _sumOfExpense.value =
-                transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
-
-            _sumOfIncome.value =
-                transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
             _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
-            _groupByTag.value = transactions.groupBy { it.tag }.mapValues { entry ->
+         /*   _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.timeInMiles.toString() }.mapValues { entry ->
                 entry.value.sortedByDescending { it.timeInMiles }
-            }
+            }*/
+            _groupByTag.value = groupTransactionsByDate(transactions)
 
         }.addOnFailureListener { e ->
             println("Error retrieving transactions: ${e.message}")
             _transactionsFlow.value = emptyList()
         }
     }
+
+    private fun groupTransactionsByDate(transactions: List<AddTransaction>): Map<String?, List<AddTransaction>> {
+        return transactions
+            .sortedByDescending { it.timeInMiles }
+            .groupBy {
+                // Convert timeInMiles to a Date object
+                val calendar = Calendar.getInstance()
+                calendar.timeInMillis = it.timeInMiles?:0
+                // Extract the date part as a string (e.g., "2024-06-26")
+                "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH) + 1}-${calendar.get(Calendar.DAY_OF_MONTH)}"
+            }
+            .mapValues { entry ->
+                entry.value.sortedByDescending { it.timeInMiles }
+            }
+    }
+
 }
