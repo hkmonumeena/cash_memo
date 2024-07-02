@@ -4,9 +4,12 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.FirebaseDatabase
+import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -18,6 +21,8 @@ class AddTransactionViewModel @Inject constructor(
     private val appPreference: AppPreference,
 ) : ViewModel() {
     val showLoading = mutableStateOf(false)
+    private val _result = MutableStateFlow<Result?>(null)
+    val result: StateFlow<Result?> = _result
 
     init {
         Log.e("kiihgfh", "${appPreference.userId}")
@@ -56,15 +61,18 @@ class AddTransactionViewModel @Inject constructor(
                 .addOnSuccessListener {
                     showLoading.value = false
                     myToast.showToast("Transaction successfully stored.")
+                    _result.value = Result.Success
                     println("Transaction successfully stored.")
                 }
                 .addOnFailureListener { e ->
                     showLoading.value = false
                     myToast.showToast("Failed to store transaction: ${e.message}")
                     println("Failed to store transaction: ${e.message}")
+                    _result.value = Result.Success
                 }
         } else {
             showLoading.value = false
+            _result.value = Result.Success
             println("Failed to generate transaction ID.")
         }
     }

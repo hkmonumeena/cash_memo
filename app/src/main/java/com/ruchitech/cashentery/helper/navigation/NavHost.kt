@@ -60,7 +60,9 @@ fun NavigationComponent(
 
         composable<Screen.AddTransaction> {
             val viewModel = hiltViewModel<AddTransactionViewModel>()
-            AddTransactionUi(viewModel)
+            AddTransactionUi(viewModel, onSuccess = {
+                navHostController.popBackStack()
+            })
         }
         composable<Screen.Home> {
             val viewModel = hiltViewModel<HomeViewModel>()
