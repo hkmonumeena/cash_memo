@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -24,6 +26,8 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,9 +48,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.R
@@ -75,6 +81,36 @@ fun formatMilliSecondsToDateTime(milliSeconds: Long): String {
     return formatter.format(calendar.time)
 }
 
+fun getCurrentDateWithFixedTime(): Date {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 5)
+    calendar.set(Calendar.MINUTE, 30)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    return calendar.time
+}
+
+fun combineDateWithCurrentTime(dateInLong: Long): Date {
+    val calendar = Calendar.getInstance()
+
+    // Get current time details
+    val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+    val currentMinute = calendar.get(Calendar.MINUTE)
+    val currentSecond = calendar.get(Calendar.SECOND)
+    val currentMillisecond = calendar.get(Calendar.MILLISECOND)
+
+    // Set the date from the long value
+    calendar.timeInMillis = dateInLong
+
+    // Set the current time to the date
+    calendar.set(Calendar.HOUR_OF_DAY, currentHour)
+    calendar.set(Calendar.MINUTE, currentMinute)
+    calendar.set(Calendar.SECOND, currentSecond)
+    calendar.set(Calendar.MILLISECOND, currentMillisecond)
+
+    return calendar.time
+}
+
 @Composable
 fun AddTransactionUi(viewModel: AddTransactionViewModel,onSuccess:()->Unit) {
     val result by viewModel.result.collectAsState()
@@ -93,11 +129,16 @@ fun AddTransactionUi(viewModel: AddTransactionViewModel,onSuccess:()->Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
+    val allTags =
+        listOf("Electricity Bill", "Water Bill", "Groceries", "Rent", "Insurance", "Internet")
+    val currentDateTime by remember {
+        mutableStateOf(Date().time)
+    }
     var date by remember {
         mutableStateOf(
             SimpleDateFormat(
-                "dd MMM yyyy HH:mm", Locale.US
-            ).format(Date())
+                "dd MMM yyyy HH:mm", Locale.getDefault()
+            ).format(currentDateTime)
         )
     }
     var paymentType by remember { mutableStateOf("Debit") }
@@ -109,7 +150,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
     var remarks by remember { mutableStateOf("") }
     var fromAccount by remember { mutableStateOf("Online") }
     var category by remember { mutableStateOf("") }
-    var tag by remember { mutableStateOf("") }
+    var tag by remember { mutableStateOf(TextFieldValue("")) }
     val dateState = rememberDatePickerState()
     val amountFocus = remember {
         FocusRequester()
@@ -117,6 +158,12 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
     val remarksFocus = remember {
         FocusRequester()
     }
+
+    val tagsFocusRequester = remember {
+        FocusRequester()
+    }
+
+    var expanded by remember { mutableStateOf(false) }
 
     var isDatePickerVisible by remember { mutableStateOf(false) }
     var paymentType2 by remember { mutableStateOf(false) }
@@ -127,11 +174,18 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
                 date = date,
                 type = Type.DEBIT,
                 account = Account.ONLINE,
-                transactionNumber = transactionNumber
+                transactionNumber = transactionNumber,
+                timeInMiles = currentDateTime,
             )
         )
     }
-
+    val suggestions = remember(tag) {
+        if (tag.text.isEmpty()) {
+            emptyList()
+        } else {
+            allTags.filter { it.contains(tag.text, ignoreCase = true) }
+        }
+    }
     LaunchedEffect(Unit) {
         // Delay added to ensure the Composable is fully composed before requesting focus
         delay(300)
@@ -174,21 +228,27 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
                         BasicTextField(
                             value = amount,
                             onValueChange = {
-                                amount = it
-                                addNewTransaction =
-                                    addNewTransaction.copy(amount = it.toDoubleOrNull())
+                                if (it.toDoubleOrNull() != null) {
+                                    amount = it
+                                    addNewTransaction =
+                                        addNewTransaction.copy(amount = it.toDoubleOrNull())
+                                } else {
+                                    amount = ""
+                                }
+
                             },
                             keyboardOptions = KeyboardOptions.Default.copy(
                                 keyboardType = KeyboardType.Number, imeAction = ImeAction.Done
                             ),
                             keyboardActions = KeyboardActions(onDone = {
-                                remarksFocus.requestFocus()
+                                tagsFocusRequester.requestFocus()
                             }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(start = 10.dp)
                                 .focusRequester(amountFocus)
-                                .onFocusChanged { },
+                                .onFocusChanged {
+                                },
                             textStyle = TextStyle(
                                 color = if (paymentType2) Income else Expense,
                                 fontFamily = montserrat_semibold,
@@ -239,45 +299,107 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier
-                    .height(45.dp)
-                    .background(Color.White, shape = RoundedCornerShape(5.dp)),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(modifier = Modifier.width(5.dp))
-                TextField(
-                    value = tag,
-                    onValueChange = {
+
+            TextField(
+                value = tag,
+                onValueChange = {
+                    //  tag = it
+                    // addNewTransaction = addNewTransaction.copy(tag = it)
+
+                    val newText = it.text.trim()
+                    if (newText.isEmpty()) {
                         tag = it
-                        addNewTransaction = addNewTransaction.copy(tag = it)
-                    },
-                    enabled = true,
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    textStyle = TextStyle(
-                        color = Color(0xFF323232),
-                        fontFamily = sfMediumFont,
-                        fontSize = 14.sp.nonScaledSp
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        disabledContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                    placeholder = {
-                        Text(
-                            "Add Tag",
-                            fontFamily = montserrat_semibold,
-                            fontSize = 10.sp.nonScaledSp,
-                            color = Color(0xFF858585)
-                        )
+                        addNewTransaction = addNewTransaction.copy(tag = it.text)
+                    } else {
+                        // Split the text by spaces
+                        val words = newText.split("\\s+".toRegex())
+
+                        // Ensure max two words and each word max length <= 20
+                        if (words.size <= 2 && words.all { it.length <= 20 }) {
+                            val capitalizedText = words.joinToString(" ") { word ->
+                                word.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
+                            }
+
+                            tag = it
+                            addNewTransaction = addNewTransaction.copy(tag = capitalizedText)
+                        }
+                        // If invalid, do nothing (keep the previous value)
                     }
-                )
+                },
+                enabled = true,
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, shape = RoundedCornerShape(2.dp))
+                    .focusRequester(tagsFocusRequester)
+                    .onFocusChanged {
+                    },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = {
+                    remarksFocus.requestFocus()
+                }),
+                textStyle = TextStyle(
+                    color = Color(0xFF323232),
+                    fontFamily = sfMediumFont,
+                    fontSize = 14.sp.nonScaledSp
+                ),
+                colors = TextFieldDefaults.colors(
+                    disabledContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                ),
+                placeholder = {
+                    Text(
+                        "Add Tag",
+                        fontFamily = montserrat_semibold,
+                        fontSize = 10.sp.nonScaledSp,
+                        color = Color(0xFF858585)
+                    )
+                }
+            )
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                suggestions.forEach { suggestion ->
+                    DropdownMenuItem(onClick = {
+                        tag = TextFieldValue(
+                            text = suggestion,
+                            selection = TextRange(suggestion.length)
+                        )
+                        expanded = false
+                    }, text = {
+                        Text(text = suggestion)
+                    })
+                }
             }
+
+            LazyColumn {
+                items(suggestions) { suggestion ->
+                    Text(
+                        text = suggestion,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .clickable {
+                                tag = TextFieldValue(
+                                    text = suggestion,
+                                    selection = TextRange(suggestion.length)
+                                )
+                            },
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    )
+                }
+            }
+
+
             Spacer(modifier = Modifier.height(10.dp))
 
             Box(
@@ -296,7 +418,10 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
                     enabled = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .wrapContentHeight(),
+                        .wrapContentHeight()
+                        //.focusRequester(remarksFocus)
+                        .onFocusChanged {
+                        },
                     textStyle = TextStyle(
                         color = Color(0xFF323232),
                         fontFamily = sfMediumFont,
@@ -472,13 +597,13 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
                         onClick = {
                             isDatePickerVisible = false
                             date = dateState.selectedDateMillis?.let {
-                                formatMilliSecondsToDateTime(
-                                    it
-                                )
+                                formatMilliSecondsToDateTime(combineDateWithCurrentTime(it).time)
                             }
                             addNewTransaction = addNewTransaction.copy(
                                 date = date,
-                                timeInMiles = dateState.selectedDateMillis
+                                timeInMiles = combineDateWithCurrentTime(
+                                    dateState.selectedDateMillis ?: 0L
+                                ).time
                             )
                         }
                     ) {

@@ -43,10 +43,13 @@ fun SumCountCard(
     iconBg: Color,
     iconTint: Color,
     rotationIcon: Float,
-    amount: Double
+    amount: Double,
+    onClick:()->Unit
 ) {
     Card(
-        onClick = { },
+        onClick = {
+            onClick()
+        },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         modifier = modifier
             .fillMaxWidth()

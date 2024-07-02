@@ -86,7 +86,7 @@ dependencies {
     kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
-
+    implementation ("androidx.navigation:navigation-compose:2.4.0-alpha01")
 }
 // Add this to enable annotation processing with Hilt
 kapt {

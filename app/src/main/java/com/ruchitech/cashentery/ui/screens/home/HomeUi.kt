@@ -19,9 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +44,6 @@ import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
-import com.ruchitech.cashentery.ui.theme.sfSemibold
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -67,7 +68,11 @@ fun formatDateTime(originalDateString: String): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () -> Unit) {
+fun HomeUi(
+    viewModel: HomeViewModel = viewModel(),
+    navigateToAddTransaction: () -> Unit,
+    navigateToTransactions: () -> Unit
+) {
     val transactions by viewModel.groupByTag.collectAsState()
     val sumOfIncome by viewModel.sumOfIncome.collectAsState()
     val sumOfExpense by viewModel.sumOfExpense.collectAsState()
@@ -86,9 +91,9 @@ fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () 
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp.nonScaledSp
                 )
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = { viewModel.updateData() }) {
                     Icon(
-                        imageVector = Icons.Outlined.Settings,
+                        imageVector = Icons.Outlined.Refresh,
                         contentDescription = "Add Transaction"
                     )
                 }
@@ -99,6 +104,7 @@ fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () 
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Transaction")
             }
         },
+        floatingActionButtonPosition = FabPosition.Center,
         content = { padding ->
             Column(
                 modifier = Modifier
@@ -114,7 +120,9 @@ fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () 
                         Color(0xFF228B22),
                         130F,
                         sumOfIncome ?: 0.0
-                    )
+                    ) {
+                        navigateToTransactions()
+                    }
                     SumCountCard(
                         Modifier.weight(1F),
                         "Paid",
@@ -122,7 +130,9 @@ fun HomeUi(viewModel: HomeViewModel = viewModel(), navigateToAddTransaction: () 
                         Color(0xFFB22222),
                         320F,
                         sumOfExpense ?: 0.0
-                    )
+                    ) {
+                        navigateToTransactions()
+                    }
                 }
                 Row(
                     modifier = Modifier
@@ -176,7 +186,7 @@ fun TransactionList(transactions: Map<String?, List<AddTransaction>>?) {
 }
 
 @Composable
-fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>) {
+private fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>) {
 
     Row(
         modifier = Modifier
@@ -202,7 +212,7 @@ fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>) {
             ) {
                 Text(
                     text = transaction.tag?.firstOrNull().toString(),
-                    fontSize = 12.sp.nonScaledSp,
+                    fontSize = 11.sp.nonScaledSp,
                     color = Color.White,
                     modifier = Modifier.padding(0.dp)
                 )
@@ -212,13 +222,13 @@ fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>) {
                 Text(
                     text = transaction.tag ?: "",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp.nonScaledSp
+                    fontSize = 12.sp.nonScaledSp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "last: ${transaction.date}",
+                    text = "last: ${formatMillisToDate(transaction.timeInMiles?:0)}",
                     fontSize = 9.sp.nonScaledSp,
-                    fontFamily = sfSemibold,
+                    fontFamily = FontFamily.SansSerif,
                     color = Color.DarkGray
                 )
             }
@@ -229,15 +239,14 @@ fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>) {
             Text(
                 text = formatToINR(u.sumOf { it.amount ?: 0.0 }),
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp.nonScaledSp,
+                fontSize = 13.sp.nonScaledSp,
                 modifier = Modifier.padding(end = 10.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "last was ${formatToINR(transaction.amount?:0.0)}",
+                text = "last was ${formatToINR(transaction.amount ?: 0.0)}",
                 fontSize = 9.sp.nonScaledSp,
-                fontFamily = sfSemibold,
-                fontWeight = FontWeight.ExtraBold,
+                fontFamily = FontFamily.SansSerif,
                 color = if (transaction.type == Type.CREDIT) Income else Expense,
                 modifier = Modifier.padding(end = 10.dp)
             )
