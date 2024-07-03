@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
@@ -38,7 +38,7 @@ import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfMediumFont
-import java.util.Date
+import com.ruchitech.cashentery.ui.theme.sfSemibold
 import java.util.Locale
 
 
@@ -100,22 +100,22 @@ private fun ChatBox(transaction: AddTransactionData) {
         ) {
             Text(
                 text = formatToINR(transaction.amount!!.toDouble()),
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp.nonScaledSp,
+                fontFamily = sfSemibold,
+                fontSize = 14.sp.nonScaledSp,
                 color = if (transaction.type == Type.CREDIT) Income else Expense,
-                modifier = Modifier
+                modifier = Modifier.height(20.dp)
             )
 
             Text(
                 text = transaction.remarks ?: "",
                 fontFamily = sfMediumFont,
-                fontSize = 11.sp.nonScaledSp.nonScaledSp,
-                modifier = Modifier.padding(top = 2.dp)
+                fontSize = 9.sp.nonScaledSp.nonScaledSp,
+                modifier = Modifier.padding(top = 0.dp)
             )
             Text(
                 text = "${if (transaction.type == Type.CREDIT) "Received on" else "Paid on"}: ${
                     formatMillisToDate(
-                        Date().time
+                        transaction.timeInMiles ?: 0
                     )
                 }",
                 fontSize = 9.sp.nonScaledSp,

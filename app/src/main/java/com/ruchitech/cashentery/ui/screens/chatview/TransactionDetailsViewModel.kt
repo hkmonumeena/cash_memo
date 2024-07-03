@@ -19,6 +19,6 @@ class TransactionDetailsViewModel @Inject constructor() : ViewModel() {
 
 // Parse the JSON into a list of AddTransactionData objects
         val transactions: List<AddTransactionData> = Gson().fromJson(transactionId, listType)
-        _transactionsFlow.value = transactions
+        _transactionsFlow.value = transactions.sortedBy { it.timeInMiles }
     }
 }
