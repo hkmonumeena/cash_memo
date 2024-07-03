@@ -98,10 +98,8 @@ fun combineDateWithCurrentTime(dateInLong: Long): Date {
     val currentMinute = calendar.get(Calendar.MINUTE)
     val currentSecond = calendar.get(Calendar.SECOND)
     val currentMillisecond = calendar.get(Calendar.MILLISECOND)
-
     // Set the date from the long value
     calendar.timeInMillis = dateInLong
-
     // Set the current time to the date
     calendar.set(Calendar.HOUR_OF_DAY, currentHour)
     calendar.set(Calendar.MINUTE, currentMinute)
@@ -170,7 +168,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
 
     var addNewTransaction by remember {
         mutableStateOf(
-            AddTransaction(
+            AddTransactionData(
                 date = date,
                 type = Type.DEBIT,
                 account = Account.ONLINE,

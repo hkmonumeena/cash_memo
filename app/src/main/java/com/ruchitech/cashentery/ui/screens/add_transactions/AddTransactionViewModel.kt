@@ -28,7 +28,7 @@ class AddTransactionViewModel @Inject constructor(
         Log.e("kiihgfh", "${appPreference.userId}")
     }
 
-    fun addTrans(addNewTransaction: AddTransaction) {
+    fun addTrans(addNewTransaction: AddTransactionData) {
         /*        val mainCategory = MainCategory(id = 1L, name = "Income")
                 val subCategory = SubCategory(id = 1L, name = "Salary")
 
@@ -47,7 +47,7 @@ class AddTransactionViewModel @Inject constructor(
     }
 
 
-    private fun storeTransaction(transaction: AddTransaction) {
+    private fun storeTransaction(transaction: AddTransactionData) {
         showLoading.value = true
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("transactions").child(appPreference.userId ?: "")
@@ -77,18 +77,18 @@ class AddTransactionViewModel @Inject constructor(
         }
     }
 
-    private suspend fun getAllTransactions(): List<AddTransaction> {
+    private suspend fun getAllTransactions(): List<AddTransactionData> {
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("transactions")
 
         return try {
             val snapshot = myRef.get().await()
-            val transactions = mutableListOf<AddTransaction>()
+            val transactions = mutableListOf<AddTransactionData>()
 
             for (childSnapshot in snapshot.children) {
                 val jsonString = childSnapshot.getValue(String::class.java)
                 if (jsonString != null) {
-                    val transaction = Json.decodeFromString<AddTransaction>(jsonString)
+                    val transaction = Json.decodeFromString<AddTransactionData>(jsonString)
                     transactions.add(transaction)
                 }
             }

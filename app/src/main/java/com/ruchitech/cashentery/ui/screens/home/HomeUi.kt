@@ -1,6 +1,7 @@
 package com.ruchitech.cashentery.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransaction
+import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
@@ -71,7 +72,8 @@ fun formatDateTime(originalDateString: String): String {
 fun HomeUi(
     viewModel: HomeViewModel = viewModel(),
     navigateToAddTransaction: () -> Unit,
-    navigateToTransactions: () -> Unit
+    navigateToTransactions: () -> Unit,
+    navigateToDetails: (transaction:List<AddTransactionData>) -> Unit,
 ) {
     val transactions by viewModel.groupByTag.collectAsState()
     val sumOfIncome by viewModel.sumOfIncome.collectAsState()
@@ -159,14 +161,16 @@ fun HomeUi(
                     }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-                TransactionList(transactions = transactions)
+                TransactionList(transactions = transactions, onClick = {
+                    navigateToDetails(it)
+                })
             }
         }
     )
 }
 
 @Composable
-fun TransactionList(transactions: Map<String?, List<AddTransaction>>?) {
+fun TransactionList(transactions: Map<String?, List<AddTransactionData>>?,onClick: (transaction:List<AddTransactionData>) -> Unit) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
@@ -174,7 +178,9 @@ fun TransactionList(transactions: Map<String?, List<AddTransaction>>?) {
         transactions?.forEach { (t, u) ->
             if (u.isNotEmpty()) {
                 item {
-                    TransactionItem(transaction = u.first(), u)
+                    TransactionItem(transaction = u.first(), u, onClick = {
+                        onClick(u)
+                    })
                 }
             }
 
@@ -186,14 +192,21 @@ fun TransactionList(transactions: Map<String?, List<AddTransaction>>?) {
 }
 
 @Composable
-private fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>) {
+private fun TransactionItem(
+    transaction: AddTransactionData,
+    u: List<AddTransactionData>,
+    onClick: () -> Unit,
+) {
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
             .padding(horizontal = 0.dp, vertical = 5.dp)
-            .background(Color.White, shape = RoundedCornerShape(5.dp)),
+            .background(Color.White, shape = RoundedCornerShape(5.dp))
+            .clickable {
+                onClick()
+            },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -226,7 +239,7 @@ private fun TransactionItem(transaction: AddTransaction, u: List<AddTransaction>
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "last: ${formatMillisToDate(transaction.timeInMiles?:0)}",
+                    text = "last: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
                     fontSize = 9.sp.nonScaledSp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.DarkGray

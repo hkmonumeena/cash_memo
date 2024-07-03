@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransaction
+import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +24,11 @@ fun formatMillisToDate(millis: Long): String {
 class HomeViewModel @Inject constructor(
     private val appPreference: AppPreference,
 ) : ViewModel() {
-    private val _transactionsFlow = MutableStateFlow<List<AddTransaction>>(emptyList())
-    val transactionsFlow: StateFlow<List<AddTransaction>> = _transactionsFlow
+    private val _transactionsFlow = MutableStateFlow<List<AddTransactionData>>(emptyList())
+    val transactionsFlow: StateFlow<List<AddTransactionData>> = _transactionsFlow
 
-    private val _groupByTag = MutableStateFlow<Map<String?, List<AddTransaction>>?>(null)
-    val groupByTag: StateFlow<Map<String?, List<AddTransaction>>?> = _groupByTag
+    private val _groupByTag = MutableStateFlow<Map<String?, List<AddTransactionData>>?>(null)
+    val groupByTag: StateFlow<Map<String?, List<AddTransactionData>>?> = _groupByTag
 
     private val _sumOfExpense = MutableStateFlow<Double?>(0.0)
     val sumOfExpense: StateFlow<Double?> = _sumOfExpense
@@ -60,11 +60,11 @@ class HomeViewModel @Inject constructor(
         val myRef = database.getReference("transactions").child(userId)
 
         myRef.get().addOnSuccessListener { snapshot ->
-            val transactions = mutableListOf<AddTransaction>()
+            val transactions = mutableListOf<AddTransactionData>()
             for (childSnapshot in snapshot.children) {
                 val jsonString = childSnapshot.getValue(String::class.java)
                 if (jsonString != null) {
-                    val transaction = Json.decodeFromString<AddTransaction>(jsonString)
+                    val transaction = Json.decodeFromString<AddTransactionData>(jsonString)
                     transactions.add(transaction)
                 }
             }

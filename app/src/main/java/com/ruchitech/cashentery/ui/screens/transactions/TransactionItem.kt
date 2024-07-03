@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransaction
+import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import com.ruchitech.cashentery.ui.screens.home.formatMillisToDate
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
@@ -29,7 +29,7 @@ import com.ruchitech.cashentery.ui.theme.Income
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
 @Composable
-fun TransactionItem(item: AddTransaction) {
+fun TransactionItem(item: AddTransactionData) {
     Column(
         modifier = Modifier
             .fillMaxWidth()

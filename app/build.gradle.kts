@@ -81,6 +81,7 @@ dependencies {
     //hilt nav
     implementation(libs.androidx.hilt.navigation.compose)
     //room db
+    implementation ("com.google.code.gson:gson:2.10.1")
 
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)

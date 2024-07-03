@@ -10,8 +10,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.google.gson.Gson
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionUi
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionViewModel
+import com.ruchitech.cashentery.ui.screens.chatview.TransactionDetailsUi
+import com.ruchitech.cashentery.ui.screens.chatview.TransactionDetailsViewModel
 import com.ruchitech.cashentery.ui.screens.home.HomeUi
 import com.ruchitech.cashentery.ui.screens.home.HomeViewModel
 import com.ruchitech.cashentery.ui.screens.mobile_auth.MobileAuthUi
@@ -73,12 +76,21 @@ fun NavigationComponent(
 
             }, navigateToTransactions = {
                 navHostController.navigate(Screen.Transactions)
+            }, navigateToDetails = {
+                navHostController.navigate(Screen.TransactionDetails(Gson().toJson(it)))
             })
         }
 
         composable<Screen.Transactions> {
             val viewModel = hiltViewModel<TransactionsViewModel>()
             TransactionUi(viewModel)
+        }
+
+        composable<Screen.TransactionDetails> {
+            val viewModel = hiltViewModel<TransactionDetailsViewModel>()
+            val args = it.toRoute<Screen.TransactionDetails>()
+            viewModel.getTransactionDetails(args.transactions)
+            TransactionDetailsUi(viewModel)
         }
 
     }
