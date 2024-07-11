@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ruchitech.cashentery.helper.navigation.NavigationComponent
+import com.ruchitech.cashentery.ui.screens.AutoComplete
 import com.ruchitech.cashentery.ui.theme.CashEnteryTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -39,19 +40,16 @@ class MainActivity : ComponentActivity() {
             val items = listOf("Home", "Transactions")
             var selectedIndex by remember { mutableIntStateOf(0) }
             CashEnteryTheme {
+                AutoComplete()
                 Scaffold(modifier = Modifier.fillMaxSize(),
-                    floatingActionButton = {
-
-                    },
+                    floatingActionButton = {},
                     floatingActionButtonPosition = FabPosition.Center,
                     bottomBar = {}) { innerPadding ->
                     NavigationComponent(
                         navHostController = navController,
                         snackbarHostState = snackbarHostState,
                         paddingValues = innerPadding
-                    ) {
-
-                    }
+                    ) {}
                 }
             }
         }

@@ -24,7 +24,7 @@ data class SubCategory(
 
 @Serializable
 data class AddTransactionData(
-    val id: String? = null,
+    var id: String? = null,
     val date: String? = null,
     val timeInMiles: Long? = null,
     val type: Type? = null, //CREDIT, DEBIT

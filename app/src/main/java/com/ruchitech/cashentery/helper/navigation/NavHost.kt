@@ -67,6 +67,8 @@ fun NavigationComponent(
             val viewModel = hiltViewModel<AddTransactionViewModel>()
             AddTransactionUi(viewModel, onSuccess = {
                 navHostController.popBackStack()
+            }, onBack = {
+                navHostController.popBackStack()
             })
         }
         composable<Screen.Home> {
@@ -83,14 +85,20 @@ fun NavigationComponent(
 
         composable<Screen.Transactions> {
             val viewModel = hiltViewModel<TransactionsViewModel>()
-            TransactionUi(viewModel)
+            TransactionUi(viewModel, onBack = {
+                navHostController.popBackStack()
+            })
         }
 
         composable<Screen.TransactionDetails> {
             val viewModel = hiltViewModel<TransactionDetailsViewModel>()
             val args = it.toRoute<Screen.TransactionDetails>()
             viewModel.getTransactionDetails(args.transactions)
-            TransactionDetailsUi(viewModel)
+            TransactionDetailsUi(viewModel, onBack = {
+                navHostController.popBackStack()
+            }, onSuccess = {
+
+            })
         }
 
     }

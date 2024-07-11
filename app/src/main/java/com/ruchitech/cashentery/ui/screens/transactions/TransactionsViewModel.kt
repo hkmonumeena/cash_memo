@@ -1,7 +1,9 @@
 package com.ruchitech.cashentery.ui.screens.transactions
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +18,7 @@ class TransactionsViewModel @Inject constructor() : ViewModel() {
     val transactionsFlow: StateFlow<List<AddTransactionData>> = _transactionsFlow
     private val _groupByTag = MutableStateFlow<Map<String?, List<AddTransactionData>>?>(null)
     val groupByTag: StateFlow<Map<String?, List<AddTransactionData>>?> = _groupByTag
-
+    private val db = FirebaseFirestore.getInstance()
 
     init {
         fetchTransactions()
@@ -31,29 +33,22 @@ class TransactionsViewModel @Inject constructor() : ViewModel() {
             return
         }
 
-        val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("transactions").child(userId)
+        db.collection("users").document(userId).collection("transactions")
+            .get()
+            .addOnSuccessListener { result ->
 
-        myRef.get().addOnSuccessListener { snapshot ->
-            val transactions = mutableListOf<AddTransactionData>()
-            for (childSnapshot in snapshot.children) {
-                val jsonString = childSnapshot.getValue(String::class.java)
-                if (jsonString != null) {
-                    val transaction = Json.decodeFromString<AddTransactionData>(jsonString)
-                    transactions.add(transaction)
-                }
+                val transactionList = result.toObjects(AddTransactionData::class.java)
+             //   transactions.value = transactionList
+                _transactionsFlow.value = transactionList.sortedByDescending { it.timeInMiles }
+                /*   _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.timeInMiles.toString() }.mapValues { entry ->
+                       entry.value.sortedByDescending { it.timeInMiles }
+                   }*/
+                _groupByTag.value = groupTransactionsByDate(transactionList)
             }
-
-            _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
-         /*   _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.timeInMiles.toString() }.mapValues { entry ->
-                entry.value.sortedByDescending { it.timeInMiles }
-            }*/
-            _groupByTag.value = groupTransactionsByDate(transactions)
-
-        }.addOnFailureListener { e ->
-            println("Error retrieving transactions: ${e.message}")
-            _transactionsFlow.value = emptyList()
-        }
+            .addOnFailureListener { exception ->
+                Log.e("MyViewModel", "Error getting transactions: ${exception.message}")
+                _transactionsFlow.value = emptyList()
+            }
     }
 
     private fun groupTransactionsByDate(transactions: List<AddTransactionData>): Map<String?, List<AddTransactionData>> {

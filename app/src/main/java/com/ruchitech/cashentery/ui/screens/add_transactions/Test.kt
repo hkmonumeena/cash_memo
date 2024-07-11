@@ -17,12 +17,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -30,6 +33,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -110,25 +114,31 @@ fun combineDateWithCurrentTime(dateInLong: Long): Date {
 }
 
 @Composable
-fun AddTransactionUi(viewModel: AddTransactionViewModel,onSuccess:()->Unit) {
+fun AddTransactionUi(
+    viewModel: AddTransactionViewModel,
+    onSuccess: () -> Unit,
+    onBack: () -> Unit,
+) {
     val result by viewModel.result.collectAsState()
-    LaunchedEffect(key1 =  result) {
-        when(result){
+    LaunchedEffect(key1 = result) {
+        when (result) {
             Result.Error -> {}
-            Result.Success -> {onSuccess()}
+            Result.Success -> {
+                onSuccess()
+            }
+
             null -> {}
         }
     }
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        AddTransactionScreen(viewModel)
+        AddTransactionScreen(viewModel, onBack)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
-    val allTags =
-        listOf("Electricity Bill", "Water Bill", "Groceries", "Rent", "Insurance", "Internet")
+private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () -> Unit) {
+    val allTags  by viewModel.categories.collectAsState()
     val currentDateTime by remember {
         mutableStateOf(Date().time)
     }
@@ -181,7 +191,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
         if (tag.text.isEmpty()) {
             emptyList()
         } else {
-            allTags.filter { it.contains(tag.text, ignoreCase = true) }
+            allTags?.filter { it?.contains(tag.text, ignoreCase = true) == true }
         }
     }
     LaunchedEffect(Unit) {
@@ -195,11 +205,22 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
             .fillMaxSize()
             .background(Color(0xFFEFEFF0))
     ) {
+
+        IconButton(onClick = {
+            onBack()
+        }, modifier = Modifier
+            .padding(16.dp)
+            .background(TempColor, shape = CircleShape)
+            .align(Alignment.BottomStart)) {
+            Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = null)
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+
             Text(
                 "Add Transaction",
                 fontSize = 24.sp,
@@ -364,29 +385,29 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel) {
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
-                suggestions.forEach { suggestion ->
+                suggestions?.forEach { suggestion ->
                     DropdownMenuItem(onClick = {
                         tag = TextFieldValue(
-                            text = suggestion,
-                            selection = TextRange(suggestion.length)
+                            text = suggestion?:"",
+                            selection = TextRange(suggestion?.length?:0)
                         )
                         expanded = false
                     }, text = {
-                        Text(text = suggestion)
+                        Text(text = suggestion?:"")
                     })
                 }
             }
 
             LazyColumn {
-                items(suggestions) { suggestion ->
+                items(suggestions?: listOf()) { suggestion ->
                     Text(
-                        text = suggestion,
+                        text = suggestion?:"",
                         modifier = Modifier
                             .padding(8.dp)
                             .clickable {
                                 tag = TextFieldValue(
-                                    text = suggestion,
-                                    selection = TextRange(suggestion.length)
+                                    text = suggestion?:"",
+                                    selection = TextRange(suggestion?.length?:0)
                                 )
                             },
                         style = TextStyle(

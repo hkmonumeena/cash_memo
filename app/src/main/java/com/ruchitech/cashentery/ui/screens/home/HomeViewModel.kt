@@ -1,8 +1,12 @@
 package com.ruchitech.cashentery.ui.screens.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObjects
+import com.google.firebase.firestore.toObjects
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
@@ -37,6 +41,7 @@ class HomeViewModel @Inject constructor(
     val sumOfIncome: StateFlow<Double?> = _sumOfIncome
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
     init {
         appPreference.userId = "W5mzbR4YFSTClH6Tsf28LilEH9d2"
@@ -56,32 +61,35 @@ class HomeViewModel @Inject constructor(
             return
         }
 
-        val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("transactions").child(userId)
+        db.collection("users").document(userId).collection("transactions")
+            .get()
+            .addOnSuccessListener { result ->
+                val transactions = ArrayList<AddTransactionData>()
 
-        myRef.get().addOnSuccessListener { snapshot ->
-            val transactions = mutableListOf<AddTransactionData>()
-            for (childSnapshot in snapshot.children) {
-                val jsonString = childSnapshot.getValue(String::class.java)
-                if (jsonString != null) {
-                    val transaction = Json.decodeFromString<AddTransactionData>(jsonString)
+                val transactionList = result.toObjects(AddTransactionData::class.java)
+                result.forEach { document ->
+                    val transaction = document.toObject(AddTransactionData::class.java).copy(document.id)
+                        //transaction.id = document.id
                     transactions.add(transaction)
+                    val documentId = document.id // <--- Get the document ID here
+                    Log.e("fdhfghfgh", "fetchTransactions:${document.id} ${transaction}")
+                    println("Document ID: $documentId")
+                    // Do something with the document ID
+                }
+
+                _sumOfExpense.value =
+                    transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+
+                _sumOfIncome.value =
+                    transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
+
+                _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+                _groupByTag.value = transactions.groupBy { it.tag }.mapValues { entry ->
+                    entry.value.sortedByDescending { it.timeInMiles }
                 }
             }
-            _sumOfExpense.value =
-                transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
-
-            _sumOfIncome.value =
-                transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
-
-            _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
-            _groupByTag.value = transactions.groupBy { it.tag }.mapValues { entry ->
-                entry.value.sortedByDescending { it.timeInMiles }
+            .addOnFailureListener { exception ->
+                Log.e("MyViewModel", "Error getting transactions: ${exception.message}")
             }
-
-        }.addOnFailureListener { e ->
-            println("Error retrieving transactions: ${e.message}")
-            _transactionsFlow.value = emptyList()
-        }
     }
 }

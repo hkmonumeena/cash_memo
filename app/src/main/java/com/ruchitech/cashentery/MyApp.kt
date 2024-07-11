@@ -1,6 +1,7 @@
 package com.ruchitech.cashentery
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.HiltAndroidApp
 
@@ -14,6 +15,7 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         FirebaseApp.initializeApp(this)
     }
 

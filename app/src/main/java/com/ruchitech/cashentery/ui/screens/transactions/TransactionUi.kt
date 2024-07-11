@@ -6,16 +6,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,9 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
+import com.ruchitech.cashentery.ui.theme.sfMediumFont
 
 @Composable
-fun TransactionUi(viewModel: TransactionsViewModel) {
+fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
     val transactions by viewModel.groupByTag.collectAsState()
     Column(
         modifier = Modifier
@@ -44,11 +49,18 @@ fun TransactionUi(viewModel: TransactionsViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Transactions",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp.nonScaledSp
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { onBack() }) {
+                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = null)
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Transactions",
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = sfMediumFont,
+                    fontSize = 16.sp.nonScaledSp
+                )
+            }
 
             Icon(imageVector = Icons.Filled.Share, contentDescription = null)
         }
@@ -59,7 +71,6 @@ fun TransactionUi(viewModel: TransactionsViewModel) {
             transactions?.forEach { (t, u) ->
                 item {
                     TransactionHeader(t, u[0].timeInMiles)
-                    Log.e("gfdgfdg", "TransactionUi: $t")
                 }
                 itemsIndexed(u) { index, item ->
                     TransactionItem(item)
