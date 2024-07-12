@@ -128,6 +128,7 @@ fun AddTransactionUi(
             }
 
             null -> {}
+            Result.ResetState -> {}
         }
     }
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -191,7 +192,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
         if (tag.text.isEmpty()) {
             emptyList()
         } else {
-            allTags?.filter { it?.contains(tag.text, ignoreCase = true) == true }
+            allTags?.filter { it?.contains("fdlggfhf", ignoreCase = true) == true }
         }
     }
     LaunchedEffect(Unit) {

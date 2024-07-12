@@ -28,7 +28,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -40,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
@@ -107,12 +110,20 @@ fun TransactionDetailsUi(
             Result.Error -> {}
             Result.Success -> {
                 showDialog = false
+                if (data.isEmpty()){
+                    onBack()
+                }
                 //onSuccess()
+            }
+            Result.ResetState ->{
+
             }
 
             null -> {}
         }
     }
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -130,7 +141,7 @@ fun TransactionDetailsUi(
                     Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
                 }
                 Spacer(modifier = Modifier.width(10.dp))
-                data.first().tag?.replaceFirstChar {
+                data.firstOrNull()?.tag?.replaceFirstChar {
                     if (it.isLowerCase()) it.titlecase(
                         Locale.getDefault()
                     ) else it.toString()
@@ -158,8 +169,7 @@ fun TransactionDetailsUi(
             Dialog(
                 onDismissRequest = {
                     showDialog = false
-                },
-                DialogProperties(
+                }, DialogProperties(
                     usePlatformDefaultWidth = false,
                     dismissOnBackPress = true,
                     dismissOnClickOutside = true
@@ -168,8 +178,7 @@ fun TransactionDetailsUi(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(),
-                    color = Color.White
+                        .fillMaxHeight(), color = Color.White
                 ) {
                     AddTransactionScreen(viewModel = viewModel, dataToEdit, onBack = {
                         showDialog = false
@@ -183,12 +192,10 @@ fun TransactionDetailsUi(
 
 @Composable
 private fun ChatBox(transaction: AddTransactionData, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-            .clickable { onClick() }
-    ) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(10.dp)
+        .clickable { onClick() }) {
         Column(
             modifier = Modifier
                 .defaultMinSize(minWidth = 200.dp)
@@ -198,7 +205,7 @@ private fun ChatBox(transaction: AddTransactionData, onClick: () -> Unit) {
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = formatToINR(transaction.amount?:0.0),
+                text = formatToINR(transaction.amount ?: 0.0),
                 fontFamily = sfSemibold,
                 fontSize = 14.sp.nonScaledSp,
                 color = if (transaction.type == Type.CREDIT) Income else Expense,
@@ -227,6 +234,61 @@ private fun ChatBox(transaction: AddTransactionData, onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    /*
+        AlertDialog(
+            onDismissRequest = onCancel, {
+                Text(text = "Confirm Deletion", fontSize = 16.sp.nonScaledSp)
+                Text(text = "Are you sure you want to delete this transaction?")
+                Row(
+                    modifier = Modifier.padding(all = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(onClick = onCancel) {
+                        Text(text = "Cancel")
+                    }
+                    Button(onClick = onConfirm) {
+                        Text(text = "Delete")
+                    }
+                }
+
+            })
+    */
+
+    AlertDialog(
+        icon = {
+            Icon(Icons.Default.Delete, contentDescription = "Example Icon")
+        },
+        title = {
+            Text(text = "Confirm Deletion")
+        },
+        text = {
+            Text(text = "Are you sure you want to delete this transaction?")
+        },
+        onDismissRequest = onCancel,
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onCancel
+            ) {
+                Text("Dismiss")
+            }
+        }
+    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun AddTransactionScreen(
     viewModel: TransactionDetailsViewModel,
     dataToEdit: Int,
@@ -234,24 +296,31 @@ private fun AddTransactionScreen(
 ) {
     val allTags by viewModel.categories.collectAsState()
     val data by viewModel.transactionsFlow.collectAsState()
+    if (data.isEmpty()) return
     val currentDateTime by remember {
         mutableStateOf(Date().time)
     }
     var date by remember {
-        mutableStateOf(data.get(dataToEdit).date)
+        mutableStateOf(data[dataToEdit].date)
     }
-    var paymentType by remember { mutableStateOf(if (data.get(dataToEdit).type == Type.CREDIT) "Credit" else "Debit") }
-    var amount by remember { mutableStateOf(data.get(dataToEdit).amount.toString()) }
-    val transactionId = data.get(dataToEdit).transactionNumber
+    var paymentType by remember { mutableStateOf(if (data[dataToEdit].type == Type.CREDIT) "CREDIT" else "DEBIT") }
+    var amount by remember { mutableStateOf(data[dataToEdit].amount.toString()) }
+    val transactionId = data[dataToEdit].transactionNumber
     var transactionNumber by remember {
-        mutableStateOf(transactionId?.removeRange(15, transactionId.length))
+        mutableStateOf(data[dataToEdit])
     }
-    var remarks by remember { mutableStateOf(data.get(dataToEdit).remarks) }
-    var fromAccount by remember { mutableStateOf(if (data.get(dataToEdit).account == Account.ONLINE) "Online" else "Cash") }
+    var remarks by remember { mutableStateOf(data[dataToEdit].remarks) }
+    var fromAccount by remember { mutableStateOf(if (data[dataToEdit].account == Account.ONLINE) "ONLINE" else "CASH") }
     var category by remember { mutableStateOf("") }
-    var tag by remember { mutableStateOf(TextFieldValue("")) }
+    var tag by remember { mutableStateOf(TextFieldValue(data[dataToEdit].tag ?: "")) }
+    var addNewTransaction by remember {
+        mutableStateOf(
+            AddTransactionData()
+        )
+    }
     LaunchedEffect(key1 = true) {
-        tag = TextFieldValue(data[dataToEdit].tag ?: "")
+        addNewTransaction = data[dataToEdit]
+        //   tag = TextFieldValue(data[dataToEdit].tag ?: "")
     }
     val dateState = rememberDatePickerState()
     val amountFocus = remember {
@@ -266,27 +335,17 @@ private fun AddTransactionScreen(
     }
 
     var expanded by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     var isDatePickerVisible by remember { mutableStateOf(false) }
-    var paymentType2 by remember { mutableStateOf(false) }
+    var paymentType2 by remember { mutableStateOf(paymentType == "CREDIT") }
 
-    var addNewTransaction by remember {
-        mutableStateOf(
-            AddTransactionData(
-                id = data.get(dataToEdit).id,
-                date = data.get(dataToEdit).date,
-                type = data.get(dataToEdit).type,
-                account = data.get(dataToEdit).account,
-                transactionNumber = data.get(dataToEdit).transactionNumber,
-                timeInMiles = data.get(dataToEdit).timeInMiles,
-            )
-        )
-    }
+
     val suggestions = remember(tag) {
         if (tag.text.isEmpty()) {
             emptyList()
         } else {
-            allTags?.filter { it?.contains(tag.text, ignoreCase = true) == true }
+            allTags?.filter { it?.contains("gflhgj", ignoreCase = true) == true }
         }
     }
     LaunchedEffect(Unit) {
@@ -301,10 +360,21 @@ private fun AddTransactionScreen(
             .background(Color(0xFFEFEFF0))
     ) {
 
+        if (showDeleteDialog) {
+            DeleteConfirmationDialog(onConfirm = {
+                onBack()
+                viewModel.deleteTransactionDb(data[dataToEdit].id ?: "", dataToEdit)
+                showDeleteDialog = false
+            }) {
+                showDeleteDialog = false
+            }
+        }
+
         IconButton(
             onClick = {
                 onBack()
-            }, modifier = Modifier
+            },
+            modifier = Modifier
                 .padding(16.dp)
                 .background(TempColor, shape = CircleShape)
                 .align(Alignment.BottomStart)
@@ -312,26 +382,45 @@ private fun AddTransactionScreen(
             Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = null)
         }
 
+
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
         ) {
 
-            Text(
-                "Update Transaction",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(bottom = 16.dp),
-                fontFamily = montserrat_medium
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Update Transaction",
+                    fontSize = 24.sp,
+                    modifier = Modifier.padding(bottom = 0.dp),
+                    fontFamily = montserrat_medium
+                )
+                Icon(imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = Color(0xFFD50D50),
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clickable {
+                            showDeleteDialog = true
+                        })
+            }
 
             Row(modifier = Modifier.height(45.dp)) {
                 Column(modifier = Modifier.weight(1F)) {
                     Row(
                         modifier = Modifier
-                            .background(Color.White, shape = RoundedCornerShape(5.dp))
-                            .height(45.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .background(
+                                Color.White, shape = RoundedCornerShape(5.dp)
+                            )
+                            .height(45.dp), verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_rupay),
@@ -349,7 +438,7 @@ private fun AddTransactionScreen(
                                     addNewTransaction =
                                         addNewTransaction.copy(amount = it.toDoubleOrNull())
                                 } else {
-                                    amount = ""
+                                    amount = "0.0"
                                 }
 
                             },
@@ -363,8 +452,7 @@ private fun AddTransactionScreen(
                                 .fillMaxWidth()
                                 .padding(start = 10.dp)
                                 .focusRequester(amountFocus)
-                                .onFocusChanged {
-                                },
+                                .onFocusChanged {},
                             textStyle = TextStyle(
                                 color = if (paymentType2) Income else Expense,
                                 fontFamily = montserrat_semibold,
@@ -403,8 +491,7 @@ private fun AddTransactionScreen(
                             addNewTransaction = addNewTransaction.copy(date = it)
                         },
                         enabled = false,
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         textStyle = TextStyle(
                             color = Color(0xFF323232),
                             fontFamily = montserrat_semibold,
@@ -416,8 +503,7 @@ private fun AddTransactionScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            TextField(
-                value = tag,
+            TextField(value = tag,
                 onValueChange = {
                     //  tag = it
                     // addNewTransaction = addNewTransaction.copy(tag = it)
@@ -448,8 +534,7 @@ private fun AddTransactionScreen(
                     .fillMaxWidth()
                     .background(Color.White, shape = RoundedCornerShape(2.dp))
                     .focusRequester(tagsFocusRequester)
-                    .onFocusChanged {
-                    },
+                    .onFocusChanged {},
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
                 ),
@@ -475,18 +560,13 @@ private fun AddTransactionScreen(
                         fontSize = 10.sp.nonScaledSp,
                         color = Color(0xFF858585)
                     )
-                }
-            )
+                })
 
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 suggestions?.forEach { suggestion ->
                     DropdownMenuItem(onClick = {
                         tag = TextFieldValue(
-                            text = suggestion ?: "",
-                            selection = TextRange(suggestion?.length ?: 0)
+                            text = suggestion ?: "", selection = TextRange(suggestion?.length ?: 0)
                         )
                         expanded = false
                     }, text = {
@@ -498,18 +578,15 @@ private fun AddTransactionScreen(
             LazyColumn {
                 items(suggestions ?: listOf()) { suggestion ->
                     Text(
-                        text = suggestion ?: "",
-                        modifier = Modifier
+                        text = suggestion ?: "", modifier = Modifier
                             .padding(8.dp)
                             .clickable {
                                 tag = TextFieldValue(
                                     text = suggestion ?: "",
                                     selection = TextRange(suggestion?.length ?: 0)
                                 )
-                            },
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                            color = Color.Black
+                            }, style = TextStyle(
+                            fontSize = 16.sp, color = Color.Black
                         )
                     )
                 }
@@ -525,40 +602,31 @@ private fun AddTransactionScreen(
                     .background(Color.White)
                     .padding(horizontal = 0.dp)
             ) {
-                TextField(
-                    value = remarks ?: "",
-                    onValueChange = {
-                        remarks = it
-                        addNewTransaction = addNewTransaction.copy(remarks = it)
-                    },
-                    enabled = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        //.focusRequester(remarksFocus)
-                        .onFocusChanged {
-                        },
-                    textStyle = TextStyle(
-                        color = Color(0xFF323232),
-                        fontFamily = sfMediumFont,
-                        fontSize = 14.sp.nonScaledSp,
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        disabledContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                    placeholder = {
-                        Text(
-                            "Type your description here",
-                            fontFamily = montserrat_semibold,
-                            fontSize = 10.sp.nonScaledSp,
-                            color = Color(0xFF858585)
-                        )
-                    }
-                )
+                TextField(value = remarks ?: "", onValueChange = {
+                    remarks = it
+                    addNewTransaction = addNewTransaction.copy(remarks = it)
+                }, enabled = true, modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    //.focusRequester(remarksFocus)
+                    .onFocusChanged {}, textStyle = TextStyle(
+                    color = Color(0xFF323232),
+                    fontFamily = sfMediumFont,
+                    fontSize = 14.sp.nonScaledSp,
+                ), colors = TextFieldDefaults.colors(
+                    disabledContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.White,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                ), placeholder = {
+                    Text(
+                        "Type your description here",
+                        fontFamily = montserrat_semibold,
+                        fontSize = 10.sp.nonScaledSp,
+                        color = Color(0xFF858585)
+                    )
+                })
 
             }
 
@@ -566,39 +634,36 @@ private fun AddTransactionScreen(
 
             // Sub Category
             var isBSelected by remember {
-                mutableStateOf(true)
+                mutableStateOf(fromAccount == "ONLINE")
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1F), contentAlignment = Alignment.CenterStart
+                        .weight(1F),
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Row(
                         modifier = Modifier.background(
-                            Color.LightGray,
-                            shape = RoundedCornerShape(10.dp)
+                            Color.LightGray, shape = RoundedCornerShape(10.dp)
                         )
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    if (isBSelected) TempColor else Color.LightGray,
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    isBSelected = true
-                                    fromAccount = Account.ONLINE.toString()
-                                    addNewTransaction =
-                                        addNewTransaction.copy(account = Account.ONLINE)
-                                }) {
+                        Box(modifier = Modifier
+                            .background(
+                                if (isBSelected) TempColor else Color.LightGray,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                isBSelected = true
+                                fromAccount = Account.ONLINE.toString()
+                                addNewTransaction = addNewTransaction.copy(account = Account.ONLINE)
+                            }) {
                             Text(
                                 text = "ONLINE",
                                 fontSize = 14.sp.nonScaledSp,
@@ -606,21 +671,19 @@ private fun AddTransactionScreen(
                                 modifier = Modifier.padding(10.dp)
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    if (!isBSelected) TempColor else Color.LightGray,
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    isBSelected = false
-                                    fromAccount = Account.CASH.toString()
-                                    addNewTransaction =
-                                        addNewTransaction.copy(account = Account.CASH)
-                                }) {
+                        Box(modifier = Modifier
+                            .background(
+                                if (!isBSelected) TempColor else Color.LightGray,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                isBSelected = false
+                                fromAccount = Account.CASH.toString()
+                                addNewTransaction = addNewTransaction.copy(account = Account.CASH)
+                            }) {
                             Text(
                                 text = " CASH ",
                                 fontSize = 14.sp.nonScaledSp,
@@ -635,28 +698,27 @@ private fun AddTransactionScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1F), contentAlignment = Alignment.CenterEnd
+                        .weight(1F),
+                    contentAlignment = Alignment.CenterEnd
                 ) {
                     Row(
                         modifier = Modifier.background(
-                            Color.LightGray,
-                            shape = RoundedCornerShape(10.dp)
+                            Color.LightGray, shape = RoundedCornerShape(10.dp)
                         )
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    if (paymentType2) TempColor3 else Color.LightGray,
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    paymentType2 = true
-                                    paymentType = "Credit"
-                                    addNewTransaction = addNewTransaction.copy(type = Type.CREDIT)
-                                }) {
+                        Box(modifier = Modifier
+                            .background(
+                                if (paymentType2) TempColor3 else Color.LightGray,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                paymentType2 = true
+                                paymentType = "Credit"
+                                addNewTransaction = addNewTransaction.copy(type = Type.CREDIT)
+                            }) {
                             Text(
                                 text = " Credit ".uppercase(Locale.getDefault()),
                                 fontSize = 14.sp.nonScaledSp,
@@ -664,20 +726,19 @@ private fun AddTransactionScreen(
                                 fontFamily = montserrat_semibold,
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    if (!paymentType2) TempColor2 else Color.LightGray,
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    paymentType2 = false
-                                    paymentType = "Debit"
-                                    addNewTransaction = addNewTransaction.copy(type = Type.DEBIT)
-                                }) {
+                        Box(modifier = Modifier
+                            .background(
+                                if (!paymentType2) TempColor2 else Color.LightGray,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                paymentType2 = false
+                                paymentType = "Debit"
+                                addNewTransaction = addNewTransaction.copy(type = Type.DEBIT)
+                            }) {
                             Text(
                                 text = "  Debit ".uppercase(Locale.ROOT),
                                 fontSize = 14.sp.nonScaledSp,
@@ -688,6 +749,7 @@ private fun AddTransactionScreen(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Submit Button
             Button(
@@ -695,48 +757,39 @@ private fun AddTransactionScreen(
                     if (amount.isNotEmpty()) {
                         viewModel.updateTransaction(addNewTransaction)
                     }
-                }, modifier = Modifier
+                },
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .padding(vertical = 16.dp),
                 shape = RoundedCornerShape(5.dp)
             ) {
                 Text("Update")
             }
         }
         if (isDatePickerVisible) {
-            DatePickerDialog(
-                onDismissRequest = {
+            DatePickerDialog(onDismissRequest = {
+                isDatePickerVisible = false
+            }, confirmButton = {
+                Button(onClick = {
                     isDatePickerVisible = false
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            isDatePickerVisible = false
-                            date = dateState.selectedDateMillis?.let {
-                                formatMilliSecondsToDateTime(combineDateWithCurrentTime(it).time)
-                            }
-                            addNewTransaction = addNewTransaction.copy(
-                                date = date,
-                                timeInMiles = combineDateWithCurrentTime(
-                                    dateState.selectedDateMillis ?: 0L
-                                ).time
-                            )
-                        }
-                    ) {
-                        Text(text = "OK")
+                    date = dateState.selectedDateMillis?.let {
+                        formatMilliSecondsToDateTime(combineDateWithCurrentTime(it).time)
                     }
-                },
-                dismissButton = {
-                    Button(
-                        onClick = { isDatePickerVisible = false }
-                    ) {
-                        Text(text = "Cancel")
-                    }
+                    addNewTransaction = addNewTransaction.copy(
+                        date = date, timeInMiles = combineDateWithCurrentTime(
+                            dateState.selectedDateMillis ?: 0L
+                        ).time
+                    )
+                }) {
+                    Text(text = "OK")
                 }
-            ) {
+            }, dismissButton = {
+                Button(onClick = { isDatePickerVisible = false }) {
+                    Text(text = "Cancel")
+                }
+            }) {
                 DatePicker(
-                    state = dateState,
-                    showModeToggle = true
+                    state = dateState, showModeToggle = true
                 )
             }
         }

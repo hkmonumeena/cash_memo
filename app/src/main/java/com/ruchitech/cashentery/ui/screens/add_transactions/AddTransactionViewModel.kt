@@ -54,6 +54,8 @@ class AddTransactionViewModel @Inject constructor(
         )
 
 
+
+
         showLoading.value = true
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("transactions").child(appPreference.userId ?: "")

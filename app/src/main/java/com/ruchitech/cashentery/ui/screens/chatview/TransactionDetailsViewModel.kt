@@ -50,10 +50,10 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
             }
         }
         _transactionsFlow.value = updatedTransactions
-        storeTransaction(updatedTransaction)
+        updateTransactionDb(updatedTransaction)
     }
 
-    private fun storeTransaction(transaction: AddTransactionData) {
+    private fun updateTransactionDb(transaction: AddTransactionData) {
         val transactionData = hashMapOf(
             "account" to transaction.account,
             "amount" to transaction.amount,
@@ -64,7 +64,6 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
             "transactionNumber" to transaction.transactionNumber,
             "type" to transaction.type
         )
-
 
         showLoading.value = true
         val database = FirebaseDatabase.getInstance()
@@ -92,23 +91,39 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
                     println("Failed to update transaction: ${exception.message}")
                     _result.value = Result.Success
                 }
-//            myRef.child(transactionId).setValue(jsonString)
-//                .addOnSuccessListener {
-//                    showLoading.value = false
-//                    myToast.showToast("Transaction successfully stored.")
-//                    _result.value = Result.Success
-//                    println("Transaction successfully stored.")
-//                }
-//                .addOnFailureListener { e ->
-//                    showLoading.value = false
-//                    myToast.showToast("Failed to store transaction: ${e.message}")
-//                    println("Failed to store transaction: ${e.message}")
-//                    _result.value = Result.Success
 
         } else {
             showLoading.value = false
             _result.value = Result.Error
             println("Failed to generate transaction ID.")
         }
+    }
+
+     fun deleteTransactionDb(transactionId: String, dataToEdit: Int) {
+        showLoading.value = true
+        db.collection("users").document(appPreference.userId?:"").collection("transactions")
+            .document(transactionId)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("MyViewModel", "Transaction deleted successfully")
+                val currentTransactions = _transactionsFlow.value.toMutableList()
+                val dataToDelete = currentTransactions.find { it.id == transactionId }
+                currentTransactions.removeAt(dataToEdit)
+                _transactionsFlow.value = currentTransactions
+                if (currentTransactions.isEmpty()){
+                    _result.value = Result.Success
+                }
+                showLoading.value = false
+                myToast.showToast("Transaction deleted successfully.")
+                _result.value = Result.Success
+                println("Transaction deleted successfully.")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("MyViewModel", "Error deleting transaction: ${exception.message}")
+                showLoading.value = false
+                myToast.showToast("Failed to delete transaction: ${exception.message}")
+                println("Failed to delete transaction: ${exception.message}")
+                _result.value = Result.Error
+            }
     }
 }

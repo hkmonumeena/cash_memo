@@ -225,7 +225,7 @@ private fun TransactionItem(
             ) {
                 Text(
                     text = transaction.tag?.firstOrNull().toString(),
-                    fontSize = 11.sp.nonScaledSp,
+                    fontSize = 14.sp.nonScaledSp,
                     color = Color.White,
                     modifier = Modifier.padding(0.dp)
                 )
