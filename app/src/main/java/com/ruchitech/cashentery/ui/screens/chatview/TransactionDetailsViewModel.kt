@@ -1,14 +1,18 @@
 package com.ruchitech.cashentery.ui.screens.chatview
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.ruchitech.cashentery.helper.Event
+import com.ruchitech.cashentery.helper.EventEmitter
 import com.ruchitech.cashentery.helper.Result
+import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
@@ -20,10 +24,14 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 @HiltViewModel
-class TransactionDetailsViewModel @Inject constructor(private val appPreference: AppPreference,private val myToast: MyToast) : ViewModel() {
+class TransactionDetailsViewModel @Inject constructor(
+    private val appPreference: AppPreference,
+    private val myToast: MyToast,
+) : SharedViewModel() {
     private val _transactionsFlow = MutableStateFlow<List<AddTransactionData>>(emptyList())
     val transactionsFlow: StateFlow<List<AddTransactionData>> = _transactionsFlow
-    private val _categories = MutableStateFlow(if (appPreference.categoriesList.isNullOrEmpty()) arrayListOf() else appPreference.categoriesList)
+    private val _categories =
+        MutableStateFlow(if (appPreference.categoriesList.isNullOrEmpty()) arrayListOf() else appPreference.categoriesList)
     val categories: StateFlow<ArrayList<String?>?> = _categories
     val showLoading = mutableStateOf(false)
     private val db = FirebaseFirestore.getInstance()
@@ -32,13 +40,24 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
     val result: StateFlow<Result?> = _result
 
     fun getTransactionDetails(transactionId: String) {
-        // Define the type for a list of AddTransactionData
         val listType = object : TypeToken<List<AddTransactionData>>() {}.type
-
-// Parse the JSON into a list of AddTransactionData objects
         val transactions: List<AddTransactionData> = Gson().fromJson(transactionId, listType)
         _transactionsFlow.value = transactions.sortedBy { it.timeInMiles }
     }
+
+    private fun addTransaction(newTransaction: AddTransactionData) {
+        // Retrieve the current list of transactions
+        val currentTransactions = _transactionsFlow.value.toMutableList()
+
+        // Add the new transaction to the list
+        currentTransactions.add(newTransaction)
+
+        // Sort the updated list by timeInMiles
+        val sortedTransactions = currentTransactions.sortedBy { it.timeInMiles }
+
+        _transactionsFlow.value = sortedTransactions
+    }
+
 
     fun updateTransaction(updatedTransaction: AddTransactionData) {
         val currentTransactions = _transactionsFlow.value
@@ -74,13 +93,16 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
             val transactionWithId = transaction.id
             val jsonString = Json.encodeToString(transactionWithId)
             Log.e("gfjknuigfg", "storeTransaction: $jsonString")
-            db.collection("users").document(appPreference.userId?:"").collection("transactions")
-                .document(transaction.id?:"") // assume transactionData has an id property
+            db.collection("users").document(appPreference.userId ?: "").collection("transactions")
+                .document(transaction.id ?: "") // assume transactionData has an id property
                 .set(transactionData, SetOptions.merge())
                 .addOnSuccessListener {
                     Log.d("MyViewModel", "Transaction updated successfully")
                     showLoading.value = false
                     myToast.showToast("Transaction updated successfully.")
+                    EventEmitter postEvent Event.HomeViewModel(
+                        transaction = transaction
+                    )
                     _result.value = Result.Success
                     println("Transaction updated successfully.")
                 }
@@ -99,9 +121,9 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
         }
     }
 
-     fun deleteTransactionDb(transactionId: String, dataToEdit: Int) {
+    fun deleteTransactionDb(transactionId: String, dataToEdit: Int) {
         showLoading.value = true
-        db.collection("users").document(appPreference.userId?:"").collection("transactions")
+        db.collection("users").document(appPreference.userId ?: "").collection("transactions")
             .document(transactionId)
             .delete()
             .addOnSuccessListener {
@@ -110,11 +132,15 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
                 val dataToDelete = currentTransactions.find { it.id == transactionId }
                 currentTransactions.removeAt(dataToEdit)
                 _transactionsFlow.value = currentTransactions
-                if (currentTransactions.isEmpty()){
+                if (currentTransactions.isEmpty()) {
                     _result.value = Result.Success
                 }
                 showLoading.value = false
                 myToast.showToast("Transaction deleted successfully.")
+                EventEmitter postEvent Event.HomeViewModel(
+                    deleteId = transactionId,
+                    transaction = null
+                )
                 _result.value = Result.Success
                 println("Transaction deleted successfully.")
             }
@@ -126,4 +152,24 @@ class TransactionDetailsViewModel @Inject constructor(private val appPreference:
                 _result.value = Result.Error
             }
     }
+
+    override fun handleInternalEvent(event: Event) {
+        super.handleInternalEvent(event)
+        when (event) {
+            is Event.HomeViewModel -> Unit
+            is Event.TransactionDetailsViewModel -> {
+                if (event.addTransactionData != null) {
+                    Handler(Looper.getMainLooper()).postDelayed(
+                        {
+                            addTransaction(event.addTransactionData)
+                        }, 1000
+                    )
+                }
+            }
+
+            is Event.TransactionsViewModel ->Unit
+        }
+    }
+
+
 }

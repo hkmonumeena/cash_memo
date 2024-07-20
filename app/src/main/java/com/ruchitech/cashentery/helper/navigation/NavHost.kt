@@ -1,9 +1,11 @@
 package com.ruchitech.cashentery.helper.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -93,7 +95,10 @@ fun NavigationComponent(
         composable<Screen.TransactionDetails> {
             val viewModel = hiltViewModel<TransactionDetailsViewModel>()
             val args = it.toRoute<Screen.TransactionDetails>()
-            viewModel.getTransactionDetails(args.transactions)
+            LaunchedEffect(key1 = true) {
+                Log.e("okiojuhygt", "NavigationComponent: $args")
+                viewModel.getTransactionDetails(args.transactions)
+            }
             TransactionDetailsUi(viewModel, onBack = {
                 navHostController.popBackStack()
             }, onSuccess = {

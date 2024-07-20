@@ -7,10 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -20,13 +20,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ruchitech.cashentery.helper.navigation.NavigationComponent
+import com.ruchitech.cashentery.helper.navigation.Screen
 import com.ruchitech.cashentery.ui.screens.AutoComplete
 import com.ruchitech.cashentery.ui.theme.CashEnteryTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -44,8 +41,17 @@ class MainActivity : ComponentActivity() {
             CashEnteryTheme {
                 AutoComplete()
                 Scaffold(modifier = Modifier.fillMaxSize(),
-                    floatingActionButton = {},
-                    floatingActionButtonPosition = FabPosition.Center,
+                    floatingActionButton = {
+                        FloatingActionButton(onClick = {
+                            navController.navigate(Screen.AddTransaction)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add Transaction"
+                            )
+                        }
+                    },
+                    floatingActionButtonPosition = FabPosition.End,
                     bottomBar = {}) { innerPadding ->
                     NavigationComponent(
                         navHostController = navController,

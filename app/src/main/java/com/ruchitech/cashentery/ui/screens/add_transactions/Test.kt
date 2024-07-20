@@ -23,10 +23,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -133,13 +133,18 @@ fun AddTransactionUi(
     }
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         AddTransactionScreen(viewModel, onBack)
+        if (viewModel.showLoading.value) {
+            Box(modifier = Modifier.fillMaxSize().background(Color(0x99797777)), contentAlignment = Alignment.Center){
+                CircularProgressIndicator(modifier = Modifier.size(100.dp))
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () -> Unit) {
-    val allTags  by viewModel.categories.collectAsState()
+    val allTags by viewModel.categories.collectAsState()
     val currentDateTime by remember {
         mutableStateOf(Date().time)
     }
@@ -207,12 +212,14 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
             .background(Color(0xFFEFEFF0))
     ) {
 
-        IconButton(onClick = {
-            onBack()
-        }, modifier = Modifier
-            .padding(16.dp)
-            .background(TempColor, shape = CircleShape)
-            .align(Alignment.BottomStart)) {
+        IconButton(
+            onClick = {
+                onBack()
+            }, modifier = Modifier
+                .padding(16.dp)
+                .background(TempColor, shape = CircleShape)
+                .align(Alignment.BottomStart)
+        ) {
             Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = null)
         }
 
@@ -389,26 +396,26 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 suggestions?.forEach { suggestion ->
                     DropdownMenuItem(onClick = {
                         tag = TextFieldValue(
-                            text = suggestion?:"",
-                            selection = TextRange(suggestion?.length?:0)
+                            text = suggestion ?: "",
+                            selection = TextRange(suggestion?.length ?: 0)
                         )
                         expanded = false
                     }, text = {
-                        Text(text = suggestion?:"")
+                        Text(text = suggestion ?: "")
                     })
                 }
             }
 
             LazyColumn {
-                items(suggestions?: listOf()) { suggestion ->
+                items(suggestions ?: listOf()) { suggestion ->
                     Text(
-                        text = suggestion?:"",
+                        text = suggestion ?: "",
                         modifier = Modifier
                             .padding(8.dp)
                             .clickable {
                                 tag = TextFieldValue(
-                                    text = suggestion?:"",
-                                    selection = TextRange(suggestion?.length?:0)
+                                    text = suggestion ?: "",
+                                    selection = TextRange(suggestion?.length ?: 0)
                                 )
                             },
                         style = TextStyle(

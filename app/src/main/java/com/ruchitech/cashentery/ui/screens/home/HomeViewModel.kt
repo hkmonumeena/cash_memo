@@ -1,19 +1,16 @@
 package com.ruchitech.cashentery.ui.screens.home
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.toObjects
-import com.google.firebase.firestore.toObjects
+import com.ruchitech.cashentery.helper.Event
+import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -24,10 +21,11 @@ fun formatMillisToDate(millis: Long): String {
     val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     return formatter.format(date)
 }
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val appPreference: AppPreference,
-) : ViewModel() {
+) : SharedViewModel() {
     private val _transactionsFlow = MutableStateFlow<List<AddTransactionData>>(emptyList())
     val transactionsFlow: StateFlow<List<AddTransactionData>> = _transactionsFlow
 
@@ -42,39 +40,35 @@ class HomeViewModel @Inject constructor(
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
+    var transactions = ArrayList<AddTransactionData>()
 
     init {
         appPreference.userId = "W5mzbR4YFSTClH6Tsf28LilEH9d2"
         fetchTransactions()
     }
 
-    fun updateData(){
+    fun updateData() {
         fetchTransactions()
     }
 
     private fun fetchTransactions() {
         val userId = "W5mzbR4YFSTClH6Tsf28LilEH9d2" //auth.currentUser?.uid
-
         if (userId == null) {
             println("User is not authenticated.")
             _transactionsFlow.value = emptyList()
             return
         }
 
-        db.collection("users").document(userId).collection("transactions")
-            .get()
+        db.collection("users").document(userId).collection("transactions").get()
             .addOnSuccessListener { result ->
-                val transactions = ArrayList<AddTransactionData>()
-
+                transactions.clear()
                 val transactionList = result.toObjects(AddTransactionData::class.java)
                 result.forEach { document ->
-                    val transaction = document.toObject(AddTransactionData::class.java).copy(document.id)
-                        //transaction.id = document.id
+                    val transaction =
+                        document.toObject(AddTransactionData::class.java).copy(document.id)
+                    //transaction.id = document.id
                     transactions.add(transaction)
                     val documentId = document.id // <--- Get the document ID here
-                    Log.e("fdhfghfgh", "fetchTransactions:${document.id} ${transaction}")
-                    println("Document ID: $documentId")
-                    // Do something with the document ID
                 }
 
                 _sumOfExpense.value =
@@ -87,9 +81,70 @@ class HomeViewModel @Inject constructor(
                 _groupByTag.value = transactions.groupBy { it.tag }.mapValues { entry ->
                     entry.value.sortedByDescending { it.timeInMiles }
                 }
-            }
-            .addOnFailureListener { exception ->
+            }.addOnFailureListener { exception ->
                 Log.e("MyViewModel", "Error getting transactions: ${exception.message}")
             }
     }
+
+    private fun updateTransaction(updatedTransaction: AddTransactionData) {
+        // Find the index of the transaction to be updated
+        val index = transactions.indexOfFirst { it.id == updatedTransaction.id }
+
+        // If the transaction exists, update it
+        if (index != -1) {
+            transactions[index] = updatedTransaction
+        }
+
+        _sumOfExpense.value =
+            transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+
+        _sumOfIncome.value =
+            transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
+
+        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+
+        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
+    }
+
+    private fun deleteTransaction(deleteId: String) {
+        // Find the index of the transaction to be deleted
+        val index = transactions.indexOfFirst { it.id == deleteId }
+
+        // If the transaction exists, remove it
+        if (index != -1) {
+            transactions.removeAt(index)
+        }
+
+        _sumOfExpense.value =
+            transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+
+        _sumOfIncome.value =
+            transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
+
+        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+
+        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
+    }
+
+
+    override fun handleInternalEvent(event: Event) {
+        super.handleInternalEvent(event)
+        when (event) {
+            is Event.HomeViewModel -> {
+                if (event.transaction != null) {
+                    updateTransaction(event.transaction)
+                }
+                if (!event.deleteId.isNullOrEmpty()) {
+                    deleteTransaction(event.deleteId)
+                }
+                if (event.refreshPage) {
+                    fetchTransactions()
+                }
+            }
+
+            is Event.TransactionDetailsViewModel -> Unit
+            is Event.TransactionsViewModel -> Unit
+        }
+    }
+
 }

@@ -101,11 +101,6 @@ fun HomeUi(
                 }
             }
         },
-        floatingActionButton = {
-            FloatingActionButton(onClick = navigateToAddTransaction) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Transaction")
-            }
-        },
         floatingActionButtonPosition = FabPosition.Center,
         content = { padding ->
             Column(
