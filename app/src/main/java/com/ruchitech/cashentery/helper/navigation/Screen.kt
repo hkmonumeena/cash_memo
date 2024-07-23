@@ -1,6 +1,5 @@
 package com.ruchitech.cashentery.helper.navigation
 
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -1,7 +1,5 @@
 package com.ruchitech.cashentery.ui.screens.add_transactions
 
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
@@ -14,7 +12,9 @@ import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -34,23 +34,25 @@ class AddTransactionViewModel @Inject constructor(
     val result: StateFlow<Result?> = _result
     private val db = FirebaseFirestore.getInstance()
     private val _categories =
-        MutableStateFlow(if (appPreference.categoriesList.isNullOrEmpty()) arrayListOf() else appPreference.categoriesList)
-    val categories: StateFlow<ArrayList<String?>?> = _categories
+        MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
+     val categories: StateFlow<List<String>> = _categories
 
     init {
         Log.e("kiihgfh", "${appPreference.userId}")
     }
 
-    fun addTrans(addNewTransaction: AddTransactionData) {
-        categories.value?.add(
+    fun addTrans(addNewTransaction: Transaction) {
+        val tempTagList = categories.value.toMutableList()
+        tempTagList.add(
             addNewTransaction.tag?.trim()
-                ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() })
+                ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }?:"")
+        _categories.value = tempTagList.toList()
         appPreference.categoriesList = categories.value
         storeTransaction(addNewTransaction)
     }
 
 
-    private fun storeTransaction(transaction: AddTransactionData) {
+    private fun storeTransaction(transaction: Transaction) {
         viewModelScope.launch(Dispatchers.IO) {
             val transactionData = hashMapOf(
                 "account" to transaction.account,
@@ -60,7 +62,8 @@ class AddTransactionViewModel @Inject constructor(
                 "tag" to transaction.tag,
                 "timeInMiles" to transaction.timeInMiles,
                 "transactionNumber" to transaction.transactionNumber,
-                "type" to transaction.type
+                "type" to transaction.type,
+                "status" to transaction.status
             )
             showLoading.value = true
             val database = FirebaseDatabase.getInstance()
@@ -76,25 +79,23 @@ class AddTransactionViewModel @Inject constructor(
                     .add(transactionData)
                     .addOnSuccessListener { documentReference ->
                         Log.d("MyViewModel", "Transaction added with ID: ${documentReference.id}")
-                        EventEmitter postEvent Event.HomeViewModel(
-                            refreshPage = true
-                        )
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            showLoading.value = false
+                        CoroutineScope(Dispatchers.IO).launch {
                             EventEmitter postEvent Event.TransactionDetailsViewModel(
-                                addTransactionData = transaction.copy(id = documentReference.id)
+                                transaction = transaction.copy(id = documentReference.id)
                             )
-                            myToast.showToast("Transaction successfully stored.")
-                            _result.value = Result.Success
+                            delay(1200)
+                            EventEmitter postEvent Event.HomeViewModel(
+                                refreshPage = true
+                            )
+                            delay(1400)
                             EventEmitter postEvent Event.TransactionsViewModel(refreshPage = true)
-        /*                    Handler(Looper.getMainLooper()).postDelayed({
 
-                            }, 1200)*/
-
-                        }, 1200)
-
-
-
+                        }
+                        CoroutineScope(Dispatchers.IO).launch {
+                            delay(2000)
+                            showLoading.value = false
+                            _result.value = Result.Success
+                        }
                         println("Transaction successfully stored.")
                     }
                     .addOnFailureListener { exception ->
@@ -105,25 +106,27 @@ class AddTransactionViewModel @Inject constructor(
                         _result.value = Result.Success
                     }
             } else {
-                showLoading.value = false
+                CoroutineScope(Dispatchers.IO).launch {
+                    delay(2000)
+                    showLoading.value = false
+                }
                 _result.value = Result.Success
-                println("Failed to generate transaction ID.")
             }
         }
     }
 
-    private suspend fun getAllTransactions(): List<AddTransactionData> {
+    private suspend fun getAllTransactions(): List<Transaction> {
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("transactions")
 
         return try {
             val snapshot = myRef.get().await()
-            val transactions = mutableListOf<AddTransactionData>()
+            val transactions = mutableListOf<Transaction>()
 
             for (childSnapshot in snapshot.children) {
                 val jsonString = childSnapshot.getValue(String::class.java)
                 if (jsonString != null) {
-                    val transaction = Json.decodeFromString<AddTransactionData>(jsonString)
+                    val transaction = Json.decodeFromString<Transaction>(jsonString)
                     transactions.add(transaction)
                 }
             }

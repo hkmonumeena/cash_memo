@@ -9,11 +9,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -65,20 +70,23 @@ fun MobileAuthUi(viewModel: MobileAuthViewModel, onCodeSent: (verificationId: St
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White), contentAlignment = Alignment.Center
+            .background(Color.White),
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 "Mobile Number",
                 fontFamily = montserrat_semibold,
-                fontSize = 10.sp.nonScaledSp,
-                color = Color(0xFF858585),
+                fontSize = 14.sp,
+                color = Color(0xFF333333),
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             BasicTextField(
                 value = amount,
                 onValueChange = {
@@ -92,26 +100,43 @@ fun MobileAuthUi(viewModel: MobileAuthViewModel, onCodeSent: (verificationId: St
                 }),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.Gray.copy(alpha = 0.1f), shape = RoundedCornerShape(5.dp))
-                    .padding(14.dp)
+                    .height(48.dp)
+                    .background(Color.White, shape = RoundedCornerShape(10.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
                     .focusRequester(amountFocus)
                     .onFocusChanged { },
                 textStyle = TextStyle(
-                    color = Color(0xFF323232),
+                    color = Color(0xFF333333),
                     fontFamily = montserrat_semibold,
-                    fontSize = 12.sp.nonScaledSp
-                )
+                    fontSize = 16.sp
+                ),
+                singleLine = true,
+                maxLines = 1
             )
-            Spacer(modifier = Modifier.height(15.dp))
-            if (state is MobileAuthViewModel.AuthState.Loading) CircularProgressIndicator() else Button(
-                onClick = {
-                    viewModel.sendOtp(amount, context)
-                }) {
-                Text(text = "Get OTP", fontFamily = sfSemibold, fontSize = 12.sp.nonScaledSp)
+            Spacer(modifier = Modifier.height(20.dp))
+            if (state is MobileAuthViewModel.AuthState.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color(0xFF333333)
+                )
+            } else {
+                Button(
+                    onClick = {
+                        viewModel.sendOtp(amount, context)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .shadow(shape = RoundedCornerShape(10.dp), elevation = 0.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007bff))
+                ) {
+                    Text(
+                        text = "Get OTP",
+                        fontFamily = sfSemibold,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(15.dp))
-
-
         }
-    }
-}
+    }}

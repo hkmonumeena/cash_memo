@@ -1,9 +1,9 @@
 package com.ruchitech.cashentery.ui.screens.chatview
 
-import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,82 +17,80 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.ruchitech.cashentery.R
+import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.ui.screens.add_transactions.Account
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
+import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import com.ruchitech.cashentery.ui.screens.add_transactions.AmountField
+import com.ruchitech.cashentery.ui.screens.add_transactions.DateField
+import com.ruchitech.cashentery.ui.screens.add_transactions.RemarksField
+import com.ruchitech.cashentery.ui.screens.add_transactions.Status
+import com.ruchitech.cashentery.ui.screens.add_transactions.SubmitButton
+import com.ruchitech.cashentery.ui.screens.add_transactions.TagTextField
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
-import com.ruchitech.cashentery.ui.screens.add_transactions.combineDateWithCurrentTime
-import com.ruchitech.cashentery.ui.screens.add_transactions.formatMilliSecondsToDateTime
+import com.ruchitech.cashentery.ui.screens.common_ui.DeleteConfirmationDialog
+import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
+import com.ruchitech.cashentery.ui.screens.common_ui.LoadingScreen
+import com.ruchitech.cashentery.ui.screens.common_ui.PaymentTypeSwitch
+import com.ruchitech.cashentery.ui.screens.common_ui.SpacerHeight
+import com.ruchitech.cashentery.ui.screens.common_ui.SpacerWidth
+import com.ruchitech.cashentery.ui.screens.common_ui.TransactionAccountSwitch
+import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusSwitch
 import com.ruchitech.cashentery.ui.screens.home.formatMillisToDate
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
+import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.TempColor
-import com.ruchitech.cashentery.ui.theme.TempColor2
-import com.ruchitech.cashentery.ui.theme.TempColor3
 import com.ruchitech.cashentery.ui.theme.montserrat_medium
-import com.ruchitech.cashentery.ui.theme.montserrat_semibold
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfMediumFont
 import com.ruchitech.cashentery.ui.theme.sfSemibold
 import kotlinx.coroutines.delay
-import java.util.Date
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 
@@ -102,21 +100,45 @@ fun TransactionDetailsUi(
     onBack: () -> Unit,
     onSuccess: () -> Unit,
 ) {
+
     val data by viewModel.transactionsFlow.collectAsState()
+    val context = LocalContext.current
+    (context as MainActivity).lastTagUsed = data.firstOrNull()?.tag
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
-    var dataToEdit by remember { mutableIntStateOf(0) }
+    var dataToEdit by remember { mutableStateOf<Transaction?>(null) }
     val result by viewModel.result.collectAsState()
+    val viewPagerState = rememberPagerState(initialPage = 0) { 5 }
+    val tabs = listOf("All", "Cleared", "Pending", "Overdue", "Void")
+    val selectedTabIndex = viewPagerState.currentPage
+    val scope = rememberCoroutineScope()
+    // Memoize filtered transactions
+    val filteredTransactions by remember(data, selectedTabIndex) {
+        derivedStateOf {
+            when (tabs[selectedTabIndex]) {
+                "Cleared" -> data.filter { it.status == Status.CLEARED }
+                "Pending" -> data.filter { it.status == Status.PENDING }
+                "Overdue" -> data.filter { it.status == Status.OVERDUE }
+                "Void" -> data.filter { it.status == Status.VOID }
+                else -> data // All transactions
+            }
+        }
+    }
+
+
     LaunchedEffect(key1 = result) {
         when (result) {
             Result.Error -> {}
             Result.Success -> {
                 showDialog = false
-                if (data.isEmpty()){
+                viewModel.resetState()
+                if (data.isEmpty()) {
                     onBack()
                 }
                 //onSuccess()
             }
-            Result.ResetState ->{
+
+            Result.ResetState -> {
 
             }
 
@@ -124,21 +146,16 @@ fun TransactionDetailsUi(
         }
     }
 
-    LaunchedEffect(data.size) {
-        Log.e("fddgfdgf", "TransactionDetailsUi: ${data.size}")
-    }
-
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFEFEFF0))
+            .background(MainBackgroundSurface)
     ) {
         Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MainBackgroundSurface)
                     .size(56.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -160,14 +177,110 @@ fun TransactionDetailsUi(
                 }
             }
             Divider()
-            LazyColumn {
-                itemsIndexed(data) { index, item ->
-                    ChatBox(transaction = item, onClick = {
-                        showDialog = true
-                        dataToEdit = index
-                    })
+            HorizontalPager(
+                state = viewPagerState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(bottom = 146.dp),
+                verticalAlignment = Alignment.Top
+            ) { page ->
+                if (filteredTransactions.isEmpty()) {
+                    EmptyTransactionUi()
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        itemsIndexed(filteredTransactions) { index, item ->
+                            ChatBox(transaction = item, onClick = {
+                                showDialog = true
+                                dataToEdit = item
+                            }, onLongClick = {
+                                dataToEdit = item
+                                showDeleteDialog = true
+                            })
+                        }
+                        item {
+                            SpacerHeight(25)
+                        }
+                    }
                 }
             }
+
+
+
+
+            Divider()
+        }
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
+            shape = RectangleShape,
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFDACB9F))
+        ) {
+            Divider()
+            TabRow(
+                modifier = Modifier,
+                selectedTabIndex = selectedTabIndex,
+                containerColor = MainBackgroundSurface,
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        Modifier.tabIndicatorOffset(tabPositions[viewPagerState.currentPage]),
+                        color = Color.Black
+                    )
+                }
+            ) {
+                tabs.forEachIndexed { index, tab ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick = { scope.launch { viewPagerState.animateScrollToPage(index) } },
+                        selectedContentColor = Color.Red,
+                        unselectedContentColor = Color.Yellow
+                    ) {
+                        Text(
+                            text = tab,
+                            fontSize = 16.sp,
+                            color = Color.Black,
+                            modifier = Modifier.padding(vertical = 14.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                StatusSummary(
+                    title = "",
+                    data = data.filter { it.type == Type.CREDIT },
+                    statuses = listOf(
+                        Status.PENDING to "a",
+                        Status.PENDING to "Pending",
+                        Status.OVERDUE to "Overdue",
+                        Status.CLEARED to "Cleared",
+                        Status.VOID to "Void"
+                    ),
+                    type = 0
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                StatusSummary(
+                    title = "",
+                    data = data.filter { it.type == Type.DEBIT },
+                    statuses = listOf(
+                        Status.PENDING to "a",
+                        Status.PENDING to "Pending",
+                        Status.OVERDUE to "Overdue",
+                        Status.CLEARED to "Cleared",
+                        Status.VOID to "Void",
+                    ),
+                    type = 1
+                )
+            }
+
         }
 
         if (showDialog) {
@@ -185,174 +298,197 @@ fun TransactionDetailsUi(
                         .fillMaxWidth()
                         .fillMaxHeight(), color = Color.White
                 ) {
-                    AddTransactionScreen(viewModel = viewModel, dataToEdit, onBack = {
+                    EditTransactionScreen(viewModel = viewModel, dataToEdit, onBack = {
                         showDialog = false
                     })
                 }
             }
         }
 
+        if (showDeleteDialog) {
+            DeleteConfirmationDialog(onConfirm = {
+                viewModel.deleteTransactionDb(dataToEdit?.id ?: "", dataToEdit)
+                showDeleteDialog = false
+            }) {
+                showDeleteDialog = false
+            }
+        }
+
     }
 }
 
 @Composable
-private fun ChatBox(transaction: AddTransactionData, onClick: () -> Unit) {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .padding(10.dp)
-        .clickable { onClick() }) {
+fun StatusSummary(
+    title: String,
+    data: List<Transaction>,
+    statuses: List<Pair<Status, String>>,
+    type: Int,
+) {
+    Column {
+        SpacerHeight(8)
+        statuses.forEach { (status, label) ->
+            val total = data.filter { it.status == status }.sumOf { it.amount ?: 0.0 }
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+            ) {
+                if (type == 0) {
+                    Text(
+                        modifier = Modifier.width(75.dp),
+                        text = if (label == "a") "STATUS" else label,
+                        fontSize = 13.sp.nonScaledSp,
+                        fontFamily = sfMediumFont,
+                        fontWeight = if (label == "a") FontWeight.Bold else FontWeight.Medium
+                    )
+                }
+                Text(
+                    text = if (label == "a" && type == 0) "INCOME" else if (label == "a" && type == 1) "EXPENSE" else formatToINR(
+                        total
+                    ),
+                    fontSize = if (label == "a" && type == 0) 14.sp.nonScaledSp else 13.sp.nonScaledSp,
+                    fontFamily = sfMediumFont,
+                    fontWeight = if (label == "a") FontWeight.Bold else FontWeight.Medium
+                )
+            }
+        }
+        SpacerHeight(10)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
         Column(
             modifier = Modifier
                 .defaultMinSize(minWidth = 200.dp)
-                .background(Color.White, shape = RoundedCornerShape(10.dp))
-                .padding(horizontal = 10.dp, vertical = 10.dp)
-                .align(if (transaction.type == Type.CREDIT) Alignment.CenterStart else Alignment.CenterEnd),
+                .fillMaxWidth(0.7F)
+                .align(if (transaction.type == Type.CREDIT) Alignment.CenterStart else Alignment.CenterEnd)
+                .combinedClickable(onLongClick = {
+                    onLongClick()
+                }, onClick = {
+                    onClick()
+                })
+                .background(Color(0xFFDACB9F), shape = RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = formatToINR(transaction.amount ?: 0.0),
+                text = (formatToINR(transaction.amount ?: 0.0)),
                 fontFamily = sfSemibold,
-                fontSize = 14.sp.nonScaledSp,
+                fontSize = 16.sp.nonScaledSp,
                 color = if (transaction.type == Type.CREDIT) Income else Expense,
                 modifier = Modifier.height(20.dp)
             )
+            SpacerHeight(5)
 
             Text(
                 text = transaction.remarks ?: "",
                 fontFamily = sfMediumFont,
-                fontSize = 9.sp.nonScaledSp.nonScaledSp,
+                fontSize = 12.sp.nonScaledSp.nonScaledSp,
+                lineHeight = 14.sp.nonScaledSp,
                 modifier = Modifier.padding(top = 0.dp)
             )
-            Text(
-                text = "${if (transaction.type == Type.CREDIT) "Received on" else "Paid on"}: ${
-                    formatMillisToDate(
-                        transaction.timeInMiles ?: 0
-                    )
-                }",
-                fontSize = 9.sp.nonScaledSp,
-                fontFamily = FontFamily.SansSerif,
-                color = Color.Gray
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val paymentStr = when (transaction.type) {
+                    Type.CREDIT -> {
+                        when (transaction.status) {
+                            Status.PENDING -> "Pending"
+                            Status.CLEARED -> "Received on"
+                            Status.OVERDUE -> "Overdue"
+                            Status.VOID -> "Void"
+                            null -> "Void"
+                        }
+                    }
+
+                    Type.DEBIT -> {
+                        when (transaction.status) {
+                            Status.PENDING -> "Pending"
+                            Status.CLEARED -> "Paid on"
+                            Status.OVERDUE -> "Overdue"
+                            Status.VOID -> "Void"
+                            null -> "Void"
+                        }
+                    }
+
+                    null -> "Void"
+                }
+                Text(
+                    text = "$paymentStr: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
+                    fontSize = 11.sp.nonScaledSp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Gray
+                )
+                var statusColor = Color(0xFF4CAF50)
+                val statusStr =
+                    when (transaction.status) {
+                        Status.PENDING -> {
+                            statusColor = Color(0xFFFF9800)
+                            "Pending"
+                        }
+
+                        Status.CLEARED -> {
+                            statusColor = Color(0xFF4CAF50)
+                            "Cleared"
+                        }
+
+                        Status.OVERDUE -> {
+                            statusColor = Color(0xFFF44336)
+                            "Overdue"
+                        }
+
+                        Status.VOID -> {
+                            statusColor = Color(0xFF9E9E9E)
+                            "Void"
+                        }
+
+                        null -> {
+                            statusColor = Color(0xFF4CAF50)
+                            "Cleared"
+                        }
+                    }
+
+                Text(
+                    text = statusStr,
+                    fontSize = 11.sp.nonScaledSp,
+                    fontFamily = sfSemibold,
+                    color = statusColor,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DeleteConfirmationDialog(
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    /*
-        AlertDialog(
-            onDismissRequest = onCancel, {
-                Text(text = "Confirm Deletion", fontSize = 16.sp.nonScaledSp)
-                Text(text = "Are you sure you want to delete this transaction?")
-                Row(
-                    modifier = Modifier.padding(all = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Button(onClick = onCancel) {
-                        Text(text = "Cancel")
-                    }
-                    Button(onClick = onConfirm) {
-                        Text(text = "Delete")
-                    }
-                }
-
-            })
-    */
-
-    AlertDialog(
-        icon = {
-            Icon(Icons.Default.Delete, contentDescription = "Example Icon")
-        },
-        title = {
-            Text(text = "Confirm Deletion")
-        },
-        text = {
-            Text(text = "Are you sure you want to delete this transaction?")
-        },
-        onDismissRequest = onCancel,
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm
-            ) {
-                Text("Confirm")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onCancel
-            ) {
-                Text("Dismiss")
-            }
-        }
-    )
-
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddTransactionScreen(
+private fun EditTransactionScreen(
     viewModel: TransactionDetailsViewModel,
-    dataToEdit: Int,
+    dataToEdit: Transaction?,
     onBack: () -> Unit,
 ) {
-    val allTags by viewModel.categories.collectAsState()
-    val data by viewModel.transactionsFlow.collectAsState()
-    if (data.isEmpty()) return
-    val currentDateTime by remember {
-        mutableStateOf(Date().time)
-    }
-    var date by remember {
-        mutableStateOf(data[dataToEdit].date)
-    }
-    var paymentType by remember { mutableStateOf(if (data[dataToEdit].type == Type.CREDIT) "CREDIT" else "DEBIT") }
-    var amount by remember { mutableStateOf(data[dataToEdit].amount.toString()) }
-    val transactionId = data[dataToEdit].transactionNumber
-    var transactionNumber by remember {
-        mutableStateOf(data[dataToEdit])
-    }
-    var remarks by remember { mutableStateOf(data[dataToEdit].remarks) }
-    var fromAccount by remember { mutableStateOf(if (data[dataToEdit].account == Account.ONLINE) "ONLINE" else "CASH") }
-    var category by remember { mutableStateOf("") }
-    var tag by remember { mutableStateOf(TextFieldValue(data[dataToEdit].tag ?: "")) }
+    val tags by viewModel.categories.collectAsState()
     var addNewTransaction by remember {
         mutableStateOf(
-            AddTransactionData()
+            Transaction()
         )
     }
     LaunchedEffect(key1 = true) {
-        addNewTransaction = data[dataToEdit]
-        //   tag = TextFieldValue(data[dataToEdit].tag ?: "")
-    }
-    val dateState = rememberDatePickerState()
-    val amountFocus = remember {
-        FocusRequester()
-    }
-    val remarksFocus = remember {
-        FocusRequester()
-    }
-
-    val tagsFocusRequester = remember {
-        FocusRequester()
-    }
-
-    var expanded by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
-    var isDatePickerVisible by remember { mutableStateOf(false) }
-    var paymentType2 by remember { mutableStateOf(paymentType == "CREDIT") }
-
-
-    val suggestions = remember(tag) {
-        if (tag.text.isEmpty()) {
-            emptyList()
-        } else {
-            allTags?.filter { it?.contains("gflhgj", ignoreCase = true) == true }
+        if (dataToEdit != null) {
+            addNewTransaction = dataToEdit
         }
     }
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         // Delay added to ensure the Composable is fully composed before requesting focus
         delay(300)
@@ -362,13 +498,14 @@ private fun AddTransactionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFEFEFF0))
+            .background(MainBackgroundSurface),
+        contentAlignment = Alignment.Center
     ) {
 
         if (showDeleteDialog) {
             DeleteConfirmationDialog(onConfirm = {
                 onBack()
-                viewModel.deleteTransactionDb(data[dataToEdit].id ?: "", dataToEdit)
+                viewModel.deleteTransactionDb(dataToEdit?.id ?: "", dataToEdit)
                 showDeleteDialog = false
             }) {
                 showDeleteDialog = false
@@ -386,8 +523,6 @@ private fun AddTransactionScreen(
         ) {
             Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = null)
         }
-
-
 
         Column(
             modifier = Modifier
@@ -418,386 +553,124 @@ private fun AddTransactionScreen(
                         })
             }
 
-            Row(modifier = Modifier.height(45.dp)) {
-                Column(modifier = Modifier.weight(1F)) {
-                    Row(
-                        modifier = Modifier
-                            .background(
-                                Color.White, shape = RoundedCornerShape(5.dp)
-                            )
-                            .height(45.dp), verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_rupay),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(25.dp)
-                                .padding(2.dp),
-                            tint = if (paymentType2) Income else Expense
-                        )
-                        BasicTextField(
-                            value = amount,
-                            onValueChange = {
-                                if (it.toDoubleOrNull() != null) {
-                                    amount = it
-                                    addNewTransaction =
-                                        addNewTransaction.copy(amount = it.toDoubleOrNull())
-                                } else {
-                                    amount = "0.0"
-                                }
 
-                            },
-                            keyboardOptions = KeyboardOptions.Default.copy(
-                                keyboardType = KeyboardType.Number, imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(onDone = {
-                                tagsFocusRequester.requestFocus()
-                            }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 10.dp)
-                                .focusRequester(amountFocus)
-                                .onFocusChanged {},
-                            textStyle = TextStyle(
-                                color = if (paymentType2) Income else Expense,
-                                fontFamily = montserrat_semibold,
-                                fontSize = 16.sp.nonScaledSp
-                            )
-                        )
-
-                    }
-
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-
-
-                // Date
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize()
-                        .background(Color.White, shape = RoundedCornerShape(5.dp))
-                        .clickable {
-                            isDatePickerVisible = true
-                        }, verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(modifier = Modifier.width(5.dp))
-                    Icon(
-                        Icons.Filled.DateRange,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(25.dp)
-                            .padding(2.dp),
-                    )
-                    BasicTextField(
-                        value = date ?: "",
-                        onValueChange = {
-                            date = it
-                            addNewTransaction = addNewTransaction.copy(date = it)
-                        },
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth(),
-                        textStyle = TextStyle(
-                            color = Color(0xFF323232),
-                            fontFamily = montserrat_semibold,
-                            fontSize = 12.sp.nonScaledSp
-                        )
-                    )
-                }
+            var newTransaction by remember {
+                mutableStateOf(dataToEdit)
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            TextField(value = tag,
-                onValueChange = {
-                    //  tag = it
-                    // addNewTransaction = addNewTransaction.copy(tag = it)
-
-                    val newText = it.text.trim()
-                    if (newText.isEmpty()) {
-                        tag = it
-                        addNewTransaction = addNewTransaction.copy(tag = it.text)
-                    } else {
-                        // Split the text by spaces
-                        val words = newText.split("\\s+".toRegex())
-
-                        // Ensure max two words and each word max length <= 20
-                        if (words.size <= 2 && words.all { it.length <= 20 }) {
-                            val capitalizedText = words.joinToString(" ") { word ->
-                                word.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
-                            }
-
-                            tag = it
-                            addNewTransaction = addNewTransaction.copy(tag = capitalizedText)
-                        }
-                        // If invalid, do nothing (keep the previous value)
-                    }
-                },
-                enabled = true,
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, shape = RoundedCornerShape(2.dp))
-                    .focusRequester(tagsFocusRequester)
-                    .onFocusChanged {},
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(onDone = {
-                    remarksFocus.requestFocus()
-                }),
-                textStyle = TextStyle(
-                    color = Color(0xFF323232),
-                    fontFamily = sfMediumFont,
-                    fontSize = 14.sp.nonScaledSp
-                ),
-                colors = TextFieldDefaults.colors(
-                    disabledContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                placeholder = {
-                    Text(
-                        "Add Tag",
-                        fontFamily = montserrat_semibold,
-                        fontSize = 10.sp.nonScaledSp,
-                        color = Color(0xFF858585)
-                    )
-                })
-
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                suggestions?.forEach { suggestion ->
-                    DropdownMenuItem(onClick = {
-                        tag = TextFieldValue(
-                            text = suggestion ?: "", selection = TextRange(suggestion?.length ?: 0)
-                        )
-                        expanded = false
-                    }, text = {
-                        Text(text = suggestion ?: "")
-                    })
-                }
-            }
-
-            LazyColumn {
-                items(suggestions ?: listOf()) { suggestion ->
-                    Text(
-                        text = suggestion ?: "", modifier = Modifier
-                            .padding(8.dp)
-                            .clickable {
-                                tag = TextFieldValue(
-                                    text = suggestion ?: "",
-                                    selection = TextRange(suggestion?.length ?: 0)
-                                )
-                            }, style = TextStyle(
-                            fontSize = 16.sp, color = Color.Black
-                        )
-                    )
-                }
-            }
-
-
-            Spacer(modifier = Modifier.height(10.dp))
-
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .background(Color.White)
-                    .padding(horizontal = 0.dp)
+                    .fillMaxSize()
+                    .background(MainBackgroundSurface)
             ) {
-                TextField(value = remarks ?: "", onValueChange = {
-                    remarks = it
-                    addNewTransaction = addNewTransaction.copy(remarks = it)
-                }, enabled = true, modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    //.focusRequester(remarksFocus)
-                    .onFocusChanged {}, textStyle = TextStyle(
-                    color = Color(0xFF323232),
-                    fontFamily = sfMediumFont,
-                    fontSize = 14.sp.nonScaledSp,
-                ), colors = TextFieldDefaults.colors(
-                    disabledContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ), placeholder = {
-                    Text(
-                        "Type your description here",
-                        fontFamily = montserrat_semibold,
-                        fontSize = 10.sp.nonScaledSp,
-                        color = Color(0xFF858585)
-                    )
-                })
 
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Sub Category
-            var isBSelected by remember {
-                mutableStateOf(fromAccount == "ONLINE")
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Box(
+                IconButton(
+                    onClick = {
+                        onBack()
+                    },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1F),
-                    contentAlignment = Alignment.CenterStart
+                        .padding(16.dp)
+                        .background(TempColor, shape = CircleShape)
+                        .align(Alignment.BottomStart)
                 ) {
-                    Row(
-                        modifier = Modifier.background(
-                            Color.LightGray, shape = RoundedCornerShape(10.dp)
-                        )
-                    ) {
-                        Box(modifier = Modifier
-                            .background(
-                                if (isBSelected) TempColor else Color.LightGray,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                isBSelected = true
-                                fromAccount = Account.ONLINE.toString()
-                                addNewTransaction = addNewTransaction.copy(account = Account.ONLINE)
-                            }) {
-                            Text(
-                                text = "ONLINE",
-                                fontSize = 14.sp.nonScaledSp,
-                                fontFamily = montserrat_semibold,
-                                modifier = Modifier.padding(10.dp)
+                    Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = null)
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 0.dp)
+                ) {
+                    SpacerHeight(10)
+                    Row(modifier = Modifier.height(50.dp)) {
+                        AmountField(
+                            modifier = Modifier.weight(1F),
+                            transactionType = newTransaction?.type,
+                            newTransaction?.amount.toString()
+                        ) { value ->
+                            newTransaction = newTransaction?.copy(amount = value)
+                        }
+
+                        SpacerWidth(10)
+                        DateField(
+                            modifier = Modifier.weight(1f), initialValue = newTransaction?.date
+                        ) { date: String?, timeInMiles: Long? ->
+                            newTransaction = newTransaction?.copy(
+                                date = date, timeInMiles = timeInMiles
                             )
                         }
-                        Box(modifier = Modifier
-                            .background(
-                                if (!isBSelected) TempColor else Color.LightGray,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                isBSelected = false
-                                fromAccount = Account.CASH.toString()
-                                addNewTransaction = addNewTransaction.copy(account = Account.CASH)
-                            }) {
-                            Text(
-                                text = " CASH ",
-                                fontSize = 14.sp.nonScaledSp,
-                                modifier = Modifier.padding(10.dp),
-                                fontFamily = montserrat_semibold,
-                            )
+                    }
+                    SpacerHeight(10)
+                    TagTextField(
+                        modifier = Modifier,
+                        initialValue = newTransaction?.tag,
+                        tags = tags
+                    ) { newTag ->
+                        newTransaction = newTransaction?.copy(tag = newTag)
+                    }
+
+                    SpacerHeight(10)
+                    RemarksField(initialValue = newTransaction?.remarks) { newRemarks ->
+                        newTransaction = newTransaction?.copy(remarks = newRemarks)
+                    }
+
+                    SpacerHeight(20)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1F),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            TransactionAccountSwitch(
+                                modifier = Modifier,
+                                initialType = newTransaction?.account ?: Account.ONLINE
+                            ) { type: Account, _: String ->
+                                newTransaction = newTransaction?.copy(account = type)
+                            }
+                        }
+                        SpacerWidth(10)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1F),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            PaymentTypeSwitch(
+                                modifier = Modifier,
+                                initialType = newTransaction?.type ?: Type.DEBIT
+                            ) { type, _ ->
+                                newTransaction = newTransaction?.copy(type = type)
+                            }
+                        }
+                    }
+                    SpacerHeight(20)
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        TransactionStatusSwitch(
+                            modifier = Modifier,
+                            initialType = newTransaction?.status ?: Status.CLEARED
+                        ) { type: Status, _: String ->
+                            newTransaction = newTransaction?.copy(status = type)
+                        }
+                    }
+                    SpacerHeight(20)
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        SubmitButton(newTransaction?.type) {
+                            if (newTransaction?.amount?.isNaN() == false && !newTransaction?.tag.isNullOrEmpty()) {
+                                viewModel.updateTransaction(newTransaction!!)
+                            }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1F),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    Row(
-                        modifier = Modifier.background(
-                            Color.LightGray, shape = RoundedCornerShape(10.dp)
-                        )
-                    ) {
-                        Box(modifier = Modifier
-                            .background(
-                                if (paymentType2) TempColor3 else Color.LightGray,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                paymentType2 = true
-                                paymentType = "Credit"
-                                addNewTransaction = addNewTransaction.copy(type = Type.CREDIT)
-                            }) {
-                            Text(
-                                text = " Credit ".uppercase(Locale.getDefault()),
-                                fontSize = 14.sp.nonScaledSp,
-                                modifier = Modifier.padding(10.dp),
-                                fontFamily = montserrat_semibold,
-                            )
-                        }
-                        Box(modifier = Modifier
-                            .background(
-                                if (!paymentType2) TempColor2 else Color.LightGray,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                paymentType2 = false
-                                paymentType = "Debit"
-                                addNewTransaction = addNewTransaction.copy(type = Type.DEBIT)
-                            }) {
-                            Text(
-                                text = "  Debit ".uppercase(Locale.ROOT),
-                                fontSize = 14.sp.nonScaledSp,
-                                fontFamily = montserrat_semibold,
-                                modifier = Modifier.padding(10.dp)
-                            )
-                        }
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Submit Button
-            Button(
-                onClick = {
-                    if (amount.isNotEmpty()) {
-                        viewModel.updateTransaction(addNewTransaction)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                shape = RoundedCornerShape(5.dp)
-            ) {
-                Text("Update")
             }
         }
-        if (isDatePickerVisible) {
-            DatePickerDialog(onDismissRequest = {
-                isDatePickerVisible = false
-            }, confirmButton = {
-                Button(onClick = {
-                    isDatePickerVisible = false
-                    date = dateState.selectedDateMillis?.let {
-                        formatMilliSecondsToDateTime(combineDateWithCurrentTime(it).time)
-                    }
-                    addNewTransaction = addNewTransaction.copy(
-                        date = date, timeInMiles = combineDateWithCurrentTime(
-                            dateState.selectedDateMillis ?: 0L
-                        ).time
-                    )
-                }) {
-                    Text(text = "OK")
-                }
-            }, dismissButton = {
-                Button(onClick = { isDatePickerVisible = false }) {
-                    Text(text = "Cancel")
-                }
-            }) {
-                DatePicker(
-                    state = dateState, showModeToggle = true
-                )
-            }
-        }
+
+        LoadingScreen(showLoading = viewModel.showLoading.value,"Updating transaction...")
+
     }
+
 
 }

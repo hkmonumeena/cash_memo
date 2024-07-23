@@ -1,9 +1,9 @@
 package com.ruchitech.cashentery.ui.screens.chatview
 
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toLowerCase
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -15,10 +15,14 @@ import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
+import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -28,38 +32,47 @@ class TransactionDetailsViewModel @Inject constructor(
     private val appPreference: AppPreference,
     private val myToast: MyToast,
 ) : SharedViewModel() {
-    private val _transactionsFlow = MutableStateFlow<List<AddTransactionData>>(emptyList())
-    val transactionsFlow: StateFlow<List<AddTransactionData>> = _transactionsFlow
+    private val _transactionsFlow = MutableStateFlow<List<Transaction>>(emptyList())
+    val transactionsFlow: StateFlow<List<Transaction>> = _transactionsFlow
     private val _categories =
-        MutableStateFlow(if (appPreference.categoriesList.isNullOrEmpty()) arrayListOf() else appPreference.categoriesList)
-    val categories: StateFlow<ArrayList<String?>?> = _categories
+        MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
+    val categories: StateFlow<List<String>> = _categories
     val showLoading = mutableStateOf(false)
     private val db = FirebaseFirestore.getInstance()
 
     private val _result = MutableStateFlow<Result?>(null)
     val result: StateFlow<Result?> = _result
+    private val debounceInterval = 2000L // 1 second
+    private var lastEventTime: Long = 0
 
-    fun getTransactionDetails(transactionId: String) {
-        val listType = object : TypeToken<List<AddTransactionData>>() {}.type
-        val transactions: List<AddTransactionData> = Gson().fromJson(transactionId, listType)
-        _transactionsFlow.value = transactions.sortedBy { it.timeInMiles }
+    fun resetState() {
+        _result.value = Result.ResetState
     }
 
-    private fun addTransaction(newTransaction: AddTransactionData) {
-        // Retrieve the current list of transactions
+    fun getTransactionDetails(transactionId: String): List<Transaction> {
+        val listType = object : TypeToken<List<Transaction>>() {}.type
+        val transactions: List<Transaction> = Gson().fromJson(transactionId, listType)
+        _transactionsFlow.value = transactions.sortedBy { it.timeInMiles }
+        return transactions
+    }
+
+    private fun addTransaction(newTransaction: Transaction) {
+        val tempTagList = categories.value.toMutableList()
+        tempTagList.add(
+            newTransaction.tag?.trim()
+                ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.ROOT) else it.toString() }
+                ?: ""
+        )
+        _categories.value = tempTagList.toList()
+        appPreference.categoriesList = categories.value
         val currentTransactions = _transactionsFlow.value.toMutableList()
-
-        // Add the new transaction to the list
         currentTransactions.add(newTransaction)
-
-        // Sort the updated list by timeInMiles
         val sortedTransactions = currentTransactions.sortedBy { it.timeInMiles }
-
         _transactionsFlow.value = sortedTransactions
     }
 
 
-    fun updateTransaction(updatedTransaction: AddTransactionData) {
+    fun updateTransaction(updatedTransaction: Transaction) {
         val currentTransactions = _transactionsFlow.value
         val updatedTransactions = currentTransactions.map { transaction ->
             if (transaction.id == updatedTransaction.id) {
@@ -72,7 +85,7 @@ class TransactionDetailsViewModel @Inject constructor(
         updateTransactionDb(updatedTransaction)
     }
 
-    private fun updateTransactionDb(transaction: AddTransactionData) {
+    private fun updateTransactionDb(transaction: Transaction) {
         val transactionData = hashMapOf(
             "account" to transaction.account,
             "amount" to transaction.amount,
@@ -81,7 +94,8 @@ class TransactionDetailsViewModel @Inject constructor(
             "tag" to transaction.tag,
             "timeInMiles" to transaction.timeInMiles,
             "transactionNumber" to transaction.transactionNumber,
-            "type" to transaction.type
+            "type" to transaction.type,
+            "status" to transaction.status
         )
 
         showLoading.value = true
@@ -92,23 +106,27 @@ class TransactionDetailsViewModel @Inject constructor(
         if (transactionId != null) {
             val transactionWithId = transaction.id
             val jsonString = Json.encodeToString(transactionWithId)
-            Log.e("gfjknuigfg", "storeTransaction: $jsonString")
             db.collection("users").document(appPreference.userId ?: "").collection("transactions")
                 .document(transaction.id ?: "") // assume transactionData has an id property
                 .set(transactionData, SetOptions.merge())
                 .addOnSuccessListener {
-                    Log.d("MyViewModel", "Transaction updated successfully")
-                    showLoading.value = false
-                    myToast.showToast("Transaction updated successfully.")
+                    CoroutineScope(Dispatchers.IO).launch {
+                        delay(2000)
+                        showLoading.value = false
+                        _result.value = Result.Success
+                    }
+                    //myToast.showToast("Transaction updated successfully.")
                     EventEmitter postEvent Event.HomeViewModel(
                         transaction = transaction
                     )
-                    _result.value = Result.Success
                     println("Transaction updated successfully.")
                 }
                 .addOnFailureListener { exception ->
                     Log.e("MyViewModel", "Error updating transaction: ${exception.message}")
-                    showLoading.value = false
+                    CoroutineScope(Dispatchers.IO).launch {
+                        delay(2000)
+                        showLoading.value = false
+                    }
                     myToast.showToast("Failed to update transaction: ${exception.message}")
                     println("Failed to update transaction: ${exception.message}")
                     _result.value = Result.Success
@@ -121,16 +139,15 @@ class TransactionDetailsViewModel @Inject constructor(
         }
     }
 
-    fun deleteTransactionDb(transactionId: String, dataToEdit: Int) {
+    fun deleteTransactionDb(transactionId: String, dataToEdit: Transaction?) {
         showLoading.value = true
         db.collection("users").document(appPreference.userId ?: "").collection("transactions")
             .document(transactionId)
             .delete()
             .addOnSuccessListener {
-                Log.d("MyViewModel", "Transaction deleted successfully")
                 val currentTransactions = _transactionsFlow.value.toMutableList()
                 val dataToDelete = currentTransactions.find { it.id == transactionId }
-                currentTransactions.removeAt(dataToEdit)
+                currentTransactions.remove(dataToEdit)
                 _transactionsFlow.value = currentTransactions
                 if (currentTransactions.isEmpty()) {
                     _result.value = Result.Success
@@ -154,20 +171,31 @@ class TransactionDetailsViewModel @Inject constructor(
     }
 
     override fun handleInternalEvent(event: Event) {
-        super.handleInternalEvent(event)
+
+        Log.e("mlgfjhkmf", "handleInternalEvent: 163")
         when (event) {
             is Event.HomeViewModel -> Unit
             is Event.TransactionDetailsViewModel -> {
-                if (event.addTransactionData != null) {
-                    Handler(Looper.getMainLooper()).postDelayed(
-                        {
-                            addTransaction(event.addTransactionData)
-                        }, 1000
-                    )
+                val currentTime = System.currentTimeMillis()
+                val timeDifference = currentTime - lastEventTime
+                Log.e("mlgfjhkmf", "handleInternalEvent: $lastEventTime")
+                if (timeDifference >= debounceInterval) {
+                    if (event.transaction != null) {
+                        Log.e("mlgfjhkmf", "handleInternalEvent: 168")
+                        val findOut = transactionsFlow.value.find {
+                            it.tag?.toLowerCase(Locale.current) == event.transaction.tag?.toLowerCase(
+                                Locale.current
+                            )
+                        }
+                        if (findOut != null) {
+                            addTransaction(event.transaction)
+                        }
+                    }
                 }
+                lastEventTime = currentTime
             }
 
-            is Event.TransactionsViewModel ->Unit
+            is Event.TransactionsViewModel -> Unit
         }
     }
 

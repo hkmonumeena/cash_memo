@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.R
+import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import java.text.NumberFormat
 import java.util.Locale
@@ -50,10 +52,11 @@ fun SumCountCard(
         onClick = {
             onClick()
         },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MainBackgroundSurface),
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp, horizontal = 5.dp)
+            .padding(vertical = 5.dp, horizontal = 5.dp),
+        border = BorderStroke(0.5.dp, color = Color(0xFFBBA76D))
     ) {
         Row(
             modifier = Modifier
@@ -62,7 +65,7 @@ fun SumCountCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = level, fontSize = 10.sp.nonScaledSp, color = Color.Gray)
+            Text(text = level, fontSize = 14.sp.nonScaledSp, color = Color.Gray)
             Box(
                 modifier = Modifier
                     .background(iconBg, shape = CircleShape),
@@ -74,7 +77,7 @@ fun SumCountCard(
                     modifier = Modifier
                         .rotate(rotationIcon)
                         .padding(2.dp)
-                        .size(20.dp),
+                        .size(25.dp),
                     tint = iconTint
                 )
             }
@@ -82,7 +85,7 @@ fun SumCountCard(
 
         Text(
             text = formatToINR(amount),
-            fontSize = 16.sp.nonScaledSp,
+            fontSize = 18.sp.nonScaledSp,
             color = Color.Black,
             modifier = Modifier.padding(horizontal = 16.dp),
             fontWeight = FontWeight.ExtraBold

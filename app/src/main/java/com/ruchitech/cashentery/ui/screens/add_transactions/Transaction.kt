@@ -10,6 +10,13 @@ enum class Account {
     ONLINE, CASH
 }
 
+enum class Status {
+    PENDING,
+    CLEARED,
+    OVERDUE,
+    VOID
+}
+
 @Serializable
 data class MainCategory(
     val id: Long,
@@ -23,7 +30,7 @@ data class SubCategory(
 )
 
 @Serializable
-data class AddTransactionData(
+data class Transaction(
     var id: String? = null,
     val date: String? = null,
     val timeInMiles: Long? = null,
@@ -33,6 +40,7 @@ data class AddTransactionData(
     val amount: Double? = null,
     val remarks: String? = null,
     val tag: String? = null,
+    val status: Status? = Status.CLEARED
     /*    val mainCategory: MainCategory? = null,
         val subCategory: SubCategory? = null,*/
 )

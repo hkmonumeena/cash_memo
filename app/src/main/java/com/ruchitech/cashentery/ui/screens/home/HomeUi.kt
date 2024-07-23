@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.home
 
+import android.os.Handler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,33 +19,49 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.ruchitech.cashentery.MainActivity
+import com.ruchitech.cashentery.ui.screens.AutoComplete
+import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
+import com.ruchitech.cashentery.ui.screens.common_ui.DropdownSearch
+import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
+import com.ruchitech.cashentery.ui.screens.common_ui.SignOutConfirmationDialog
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
+import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -73,12 +90,21 @@ fun HomeUi(
     viewModel: HomeViewModel = viewModel(),
     navigateToAddTransaction: () -> Unit,
     navigateToTransactions: () -> Unit,
-    navigateToDetails: (transaction:List<AddTransactionData>) -> Unit,
+    navigateToDetails: (transaction: List<Transaction>) -> Unit,
+    onSignOut: () -> Unit,
 ) {
     val transactions by viewModel.groupByTag.collectAsState()
     val sumOfIncome by viewModel.sumOfIncome.collectAsState()
     val sumOfExpense by viewModel.sumOfExpense.collectAsState()
-
+    val context = LocalContext.current
+    (context as MainActivity).lastTagUsed = ""
+    var showDeleteDialog by remember {
+        mutableStateOf(false)
+    }
+    var isRefreshing by remember { mutableStateOf(false) }
+val scope = rememberCoroutineScope()
+    // SwipeRefreshState keeps track of the refresh state
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = isRefreshing)
     Scaffold(
         topBar = {
             Row(
@@ -91,114 +117,158 @@ fun HomeUi(
                 Text(
                     text = "Monu Meena",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp.nonScaledSp
+                    fontSize = 15.sp
                 )
-                IconButton(onClick = { viewModel.updateData() }) {
-                    Icon(
-                        imageVector = Icons.Outlined.Refresh,
-                        contentDescription = "Add Transaction"
-                    )
+                Row(horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = { viewModel.updateData() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Refresh,
+                            contentDescription = "Refresh"
+                        )
+                    }
+                    IconButton(onClick = {
+                        showDeleteDialog = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Outlined.ExitToApp,
+                            contentDescription = "Sign out"
+                        )
+                    }
                 }
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
         content = { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFEFEFF0))
-                    .padding(padding)
-            ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    SumCountCard(
-                        Modifier.weight(1F),
-                        "Received",
-                        Color(0xFFDBF5DB),
-                        Color(0xFF228B22),
-                        130F,
-                        sumOfIncome ?: 0.0
-                    ) {
-                        navigateToTransactions()
+            if (showDeleteDialog) {
+                SignOutConfirmationDialog(
+                    onConfirm = {
+                        showDeleteDialog = false
+                        viewModel.signout()
+                        onSignOut()
+                    },
+                    onCancel = {
+                        showDeleteDialog = false
                     }
-                    SumCountCard(
-                        Modifier.weight(1F),
-                        "Paid",
-                        Color(0xFFFEECEC),
-                        Color(0xFFB22222),
-                        320F,
-                        sumOfExpense ?: 0.0
-                    ) {
-                        navigateToTransactions()
-                    }
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp, horizontal = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Most used Tags(15)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp.nonScaledSp
-                    )
-
-                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        Icon(
-                            imageVector = Icons.Outlined.Search,
-                            contentDescription = "Add Transaction"
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Icon(
-                            imageVector = Icons.Outlined.DateRange,
-                            contentDescription = "Add Transaction"
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                TransactionList(transactions = transactions, onClick = {
-                    navigateToDetails(it)
-                })
+                )
             }
-        }
-    )
-}
 
-@Composable
-fun TransactionList(transactions: Map<String?, List<AddTransactionData>>?,onClick: (transaction:List<AddTransactionData>) -> Unit) {
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-    ) {
+            // Use SwipeRefresh to enable pull-to-refresh
+            SwipeRefresh(
+                modifier = Modifier.background(MainBackgroundSurface),
+                state = swipeRefreshState,
+                onRefresh = {
+                    isRefreshing = true
+                    viewModel.updateData() // Trigger your data refresh logic here
+                    scope.launch {
+                        delay(1500)
+                        isRefreshing = false
+                    }
+                }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MainBackgroundSurface)
+                        .padding(padding)
 
-        transactions?.forEach { (t, u) ->
-            if (u.isNotEmpty()) {
-                item {
-                    TransactionItem(transaction = u.first(), u, onClick = {
-                        onClick(u)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp)
+                    ) {
+                        SumCountCard(
+                            Modifier.weight(1f),
+                            "Received",
+                            Color(0xFFDBF5DB),
+                            Color(0xFF228B22),
+                            130f,
+                            sumOfIncome ?: 0.0
+                        ) {
+                            navigateToTransactions()
+                        }
+                        SumCountCard(
+                            Modifier.weight(1f),
+                            "Paid",
+                            Color(0xFFFEECEC),
+                            Color(0xFFB22222),
+                            320f,
+                            sumOfExpense ?: 0.0
+                        ) {
+                            navigateToTransactions()
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp, horizontal = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Most used Tags(${transactions?.size})",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+
+                        Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = "Search"
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Icon(
+                                imageVector = Icons.Outlined.DateRange,
+                                contentDescription = "Date Range"
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(0.dp))
+                    TransactionList(transactions = transactions, onClick = {
+                        navigateToDetails(it)
                     })
                 }
             }
-
         }
-        /*     items(transactions.) { transaction ->
-                 TransactionItem(transaction = transaction)
-             }*/
+    )}
+
+@Composable
+fun TransactionList(
+    transactions: Map<String?, List<Transaction>>?,
+    onClick: (transaction: List<Transaction>) -> Unit,
+) {
+    if (transactions.isNullOrEmpty()) {
+        EmptyTransactionUi()
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            transactions.forEach { (t, u) ->
+                if (u.isNotEmpty()) {
+                    item {
+                        Divider(color = Color((0xFFBBA76D)))
+                        TransactionItem(transaction = u.first(), u, onClick = {
+                            onClick(u)
+                        })
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun TransactionItem(
-    transaction: AddTransactionData,
-    u: List<AddTransactionData>,
+    transaction: Transaction,
+    u: List<Transaction>,
     onClick: () -> Unit,
 ) {
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = 0.dp, vertical = 5.dp)
-            .background(Color.White, shape = RoundedCornerShape(5.dp))
+            .height(65.dp)
+            .padding(horizontal = 0.dp, vertical = 0.dp)
+            .background(MainBackgroundSurface, shape = RoundedCornerShape(5.dp))
             .clickable {
                 onClick()
             },
@@ -211,9 +281,9 @@ private fun TransactionItem(
             Box(
                 modifier = Modifier
                     .padding(top = 10.dp)
-                    .size(22.dp)
+                    .size(25.dp)
                     .background(
-                        color = Color.LightGray,
+                        color = Color(0xFFBBA76D),
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -230,12 +300,12 @@ private fun TransactionItem(
                 Text(
                     text = transaction.tag ?: "",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp.nonScaledSp
+                    fontSize = 14.sp.nonScaledSp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "last: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
-                    fontSize = 9.sp.nonScaledSp,
+                    fontSize = 12.sp.nonScaledSp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.DarkGray
                 )
@@ -247,13 +317,13 @@ private fun TransactionItem(
             Text(
                 text = formatToINR(u.sumOf { it.amount ?: 0.0 }),
                 fontWeight = FontWeight.Bold,
-                fontSize = 13.sp.nonScaledSp,
+                fontSize = 14.sp.nonScaledSp,
                 modifier = Modifier.padding(end = 10.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "last was ${formatToINR(transaction.amount ?: 0.0)}",
-                fontSize = 9.sp.nonScaledSp,
+                fontSize = 12.sp.nonScaledSp,
                 fontFamily = FontFamily.SansSerif,
                 color = if (transaction.type == Type.CREDIT) Income else Expense,
                 modifier = Modifier.padding(end = 10.dp)

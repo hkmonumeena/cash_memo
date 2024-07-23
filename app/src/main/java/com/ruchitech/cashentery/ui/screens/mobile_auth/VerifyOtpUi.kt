@@ -1,6 +1,7 @@
 package com.ruchitech.cashentery.ui.screens.mobile_auth
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -29,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -36,11 +39,13 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.R
+import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -55,27 +60,37 @@ fun VerifyOtpUi(
         viewModel.verificationId = verificationId
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MainBackgroundSurface),
+        contentAlignment = Alignment.TopCenter
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(150.dp))
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_background),
                 contentDescription = "mobile icon",
                 modifier = Modifier
-                    .fillMaxHeight(0.3F)
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Color.White, shape = CircleShape)
                     .padding(10.dp)
             )
             Spacer(modifier = Modifier.height(30.dp))
             Text(
-                text = "Verification", modifier = Modifier.fillMaxWidth(),
-                fontSize = 20.sp,
+                text = "Verification",
+                modifier = Modifier.fillMaxWidth(),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
+                color = Color(0xFF333333)
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
@@ -84,9 +99,9 @@ fun VerifyOtpUi(
                     .fillMaxWidth()
                     .padding(horizontal = 15.dp),
                 fontSize = 16.sp,
-                textAlign = TextAlign.Center,
+                color = Color(0xFF666666)
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             val (editValue, setEditValue) = remember { mutableStateOf("") }
             val otpLength = remember { 6 }
             val focusRequester = remember { FocusRequester() }
@@ -104,26 +119,34 @@ fun VerifyOtpUi(
                     .focusRequester(focusRequester),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number
-                )
+                ),
+                singleLine = true,
+                maxLines = 1
             )
             Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 (0 until otpLength).map { index ->
                     viewModel.filledOtp.value = editValue
-                    OtpCell(modifier = Modifier
-                        .size(45.dp)
-                        .onFocusChanged {
-                            focusRequester.requestFocus()
-                        }
-                        .clickable {
-                            //   focusRequester.requestFocus()
-                            keyboard?.show()
-                        }
-                        .border(1.dp, Color.DarkGray),
+                    OtpCell(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(color = MaterialTheme.colorScheme.surface)
+                            .border(1.dp, Color.DarkGray, shape = RoundedCornerShape(8.dp))
+                            .onFocusChanged {
+                                focusRequester.requestFocus()
+                            }
+                            .clickable {
+                                keyboard?.show()
+                            },
                         value = editValue.getOrNull(index)?.toString() ?: "",
-                        isCursorVisible = editValue.length == index)
-                    Spacer(modifier = Modifier.size(8.dp))
+                        isCursorVisible = editValue.length == index
+                    )
+                    Spacer(modifier = Modifier.size(12.dp))
                 }
             }
 
@@ -138,17 +161,14 @@ fun VerifyOtpUi(
                     .shadow(shape = RoundedCornerShape(15.dp), elevation = 0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500))
             ) {
-                Text("Verify Otp", color = Color.White)
+                Text("Verify Otp", color = Color.White, fontSize = 18.sp)
             }
-
-
         }
         if (viewModel.showLoading.value) {
             onAuthenticated()
             viewModel.showLoading.value = false
         }
     }
-
 }
 
 @Composable
@@ -157,25 +177,30 @@ fun OtpCell(
     value: String,
     isCursorVisible: Boolean = false,
 ) {
+    val cursorSymbol = remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val (cursorSymbol, setCursorSymbol) = remember { mutableStateOf("") }
 
-    LaunchedEffect(key1 = cursorSymbol, isCursorVisible) {
+    LaunchedEffect(key1 = isCursorVisible) {
         if (isCursorVisible) {
             scope.launch {
                 delay(350)
-                setCursorSymbol(if (cursorSymbol.isEmpty()) "|" else "")
+                cursorSymbol.value = if (cursorSymbol.value.isEmpty()) "|" else ""
             }
         }
     }
 
     Box(
         modifier = modifier
+            .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(8.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-
         Text(
-            text = if (isCursorVisible) cursorSymbol else value,
-            style = MaterialTheme.typography.headlineSmall,
+            text = if (isCursorVisible) cursorSymbol.value else value,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.align(Alignment.Center)
         )
     }

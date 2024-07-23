@@ -25,12 +25,18 @@ class AppPreference(context: Context) : PreferenceConfig(context) {
         get() = getPreference(PASSWORD, PrefConfig.StringValue())
         set(value) = setPreference(PASSWORD, PrefConfig.StringValue(value))
 
-    var categoriesList: ArrayList<String?>?
-        get() = Gson().fromJson(
-            getPreference(CATEGORIES, PrefConfig.StringValue()) as String?,
-            object : TypeToken<List<String?>>() {}.type
-        )
-        set(value) = setPreference(CATEGORIES, PrefConfig.StringValue(Gson().toJson(value)))
+    var categoriesList: List<String>
+        get() {
+            val jsonString = getPreference(CATEGORIES, PrefConfig.StringValue()) as String?
+            val listType = object : TypeToken<List<String>>() {}.type
+            val list: List<String> = Gson().fromJson(jsonString, listType) ?: emptyList()
+            return list.distinct() // Ensure uniqueness in the getter
+        }
+        set(value) {
+            val uniqueList = value.distinct() // Remove duplicates before setting
+            setPreference(CATEGORIES, PrefConfig.StringValue(Gson().toJson(uniqueList)))
+        }
+
 
 
 }

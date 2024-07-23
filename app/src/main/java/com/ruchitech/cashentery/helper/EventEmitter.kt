@@ -3,7 +3,7 @@ package com.ruchitech.cashentery.helper
 
 import android.os.Handler
 import android.os.Looper
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
+import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import java.util.concurrent.CopyOnWriteArrayList
 
 object EventEmitter {
@@ -49,11 +49,11 @@ sealed class Event {
     class HomeViewModel(
         val refreshPage: Boolean = false,
         val deleteId: String? = null,
-        val transaction: AddTransactionData? = null,
+        val transaction: Transaction? = null,
     ) : Event()
 
     class TransactionDetailsViewModel(
-        val addTransactionData: AddTransactionData? = null,
+        val transaction: Transaction? = null,
     ) : Event()
 
     class TransactionsViewModel(

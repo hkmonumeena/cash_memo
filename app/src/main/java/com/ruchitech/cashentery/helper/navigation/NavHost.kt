@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -25,6 +28,7 @@ import com.ruchitech.cashentery.ui.screens.mobile_auth.VerifyOtpUi
 import com.ruchitech.cashentery.ui.screens.mobile_auth.VerifyOtpViewModel
 import com.ruchitech.cashentery.ui.screens.transactions.TransactionUi
 import com.ruchitech.cashentery.ui.screens.transactions.TransactionsViewModel
+import java.util.Date
 
 @Composable
 fun NavigationComponent(
@@ -35,7 +39,7 @@ fun NavigationComponent(
 ) {
     NavHost(
         navController = navHostController,
-        startDestination = Screen.Home,
+        startDestination = Screen.MobileAuth,
         modifier = Modifier.padding(paddingValues)
     ) {
         composable<Screen.MobileAuth> {
@@ -57,7 +61,7 @@ fun NavigationComponent(
             val viewModel = hiltViewModel<VerifyOtpViewModel>()
             val args = it.toRoute<Screen.VerifyOtp>()
             VerifyOtpUi(viewModel, onAuthenticated = {
-                navHostController.navigate(Screen.AddTransaction) {
+                navHostController.navigate(Screen.Home) {
                     popUpTo(Screen.MobileAuth) {
                         inclusive = true
                     }
@@ -72,6 +76,7 @@ fun NavigationComponent(
             }, onBack = {
                 navHostController.popBackStack()
             })
+
         }
         composable<Screen.Home> {
             val viewModel = hiltViewModel<HomeViewModel>()
@@ -82,22 +87,34 @@ fun NavigationComponent(
                 navHostController.navigate(Screen.Transactions)
             }, navigateToDetails = {
                 navHostController.navigate(Screen.TransactionDetails(Gson().toJson(it)))
+            }, onSignOut = {
+                navHostController.navigate(Screen.MobileAuth) {
+                    popUpTo(Screen.Home) {
+                        inclusive = true
+                    }
+                }
             })
         }
 
         composable<Screen.Transactions> {
             val viewModel = hiltViewModel<TransactionsViewModel>()
+            Log.e("fdghdfhgfdh", "NavigationComponent: 101", )
             TransactionUi(viewModel, onBack = {
                 navHostController.popBackStack()
             })
         }
 
+
+
         composable<Screen.TransactionDetails> {
             val viewModel = hiltViewModel<TransactionDetailsViewModel>()
             val args = it.toRoute<Screen.TransactionDetails>()
-            LaunchedEffect(key1 = true) {
-                Log.e("okiojuhygt", "NavigationComponent: $args")
+            var test by rememberSaveable {
+                mutableStateOf("def")
+            }
+            if (test == "def") {
                 viewModel.getTransactionDetails(args.transactions)
+                test = Date().toString()
             }
             TransactionDetailsUi(viewModel, onBack = {
                 navHostController.popBackStack()
@@ -105,6 +122,5 @@ fun NavigationComponent(
 
             })
         }
-
     }
 }

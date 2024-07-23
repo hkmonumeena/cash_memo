@@ -13,42 +13,46 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.ruchitech.cashentery.helper.hideTransactionButton
 import com.ruchitech.cashentery.helper.navigation.NavigationComponent
 import com.ruchitech.cashentery.helper.navigation.Screen
-import com.ruchitech.cashentery.ui.screens.AutoComplete
 import com.ruchitech.cashentery.ui.theme.CashEnteryTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    var lastTagUsed: String? = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(resources.getColor(R.color.black)))
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                resources.getColor(R.color.theme_color),
+                resources.getColor(R.color.black)
+            )
+        )
         setContent {
-            val navController = rememberNavController()
-            val snackbarHostState = remember { SnackbarHostState() }
-            val items = listOf("Home", "Transactions")
-            var selectedIndex by remember { mutableIntStateOf(0) }
             CashEnteryTheme {
-                AutoComplete()
+                val navController = rememberNavController()
+                val snackbarHostState = remember { SnackbarHostState() }
+                val currentBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = currentBackStackEntry?.destination?.route
                 Scaffold(modifier = Modifier.fillMaxSize(),
                     floatingActionButton = {
-                        FloatingActionButton(onClick = {
-                            navController.navigate(Screen.AddTransaction)
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add Transaction"
-                            )
+                        if (!hideTransactionButton(currentDestination)) {
+                            FloatingActionButton(onClick = {
+                                navController.navigate(Screen.AddTransaction)
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Add Transaction"
+                                )
+                            }
                         }
                     },
                     floatingActionButtonPosition = FabPosition.End,
@@ -61,21 +65,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CashEnteryTheme {
-        Greeting("Android")
     }
 }

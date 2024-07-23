@@ -1,15 +1,11 @@
 package com.ruchitech.cashentery.ui.screens
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -42,7 +38,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
@@ -131,7 +126,7 @@ fun AutoComplete() {
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = {
-                    expanded = false
+                   // expanded = false
                 }
             )
     ) {
@@ -165,11 +160,13 @@ fun AutoComplete() {
                         expanded = true
                     },
                     placeholder = { Text("Enter any Animals Name") },
-                    colors = TextFieldDefaults.textFieldColors(
-                        containerColor = Color.Transparent,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        cursorColor = Color.Black,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        cursorColor = Color.Black
                     ),
                     textStyle = TextStyle(
                         color = Color.Black,
@@ -245,7 +242,7 @@ fun AutoComplete() {
 @Composable
 fun ItemsCategory(
     title: String,
-    onSelect: (String) -> Unit
+    onSelect: (String) -> Unit,
 ) {
 
     Row(

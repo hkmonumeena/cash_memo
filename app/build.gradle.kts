@@ -89,7 +89,10 @@ dependencies {
     kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
-    implementation ("androidx.navigation:navigation-compose:2.4.0-alpha01")
+    implementation ("androidx.navigation:navigation-compose:2.7.7")
+    implementation ("io.coil-kt:coil-compose:2.0.0")
+    implementation("com.google.accompanist:accompanist-drawablepainter:0.35.0-alpha")
+    implementation (libs.accompanist.swiperefresh)
 }
 // Add this to enable annotation processing with Hilt
 kapt {

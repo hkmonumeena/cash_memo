@@ -18,22 +18,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruchitech.cashentery.ui.screens.add_transactions.AddTransactionData
+import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import com.ruchitech.cashentery.ui.screens.add_transactions.Status
 import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import com.ruchitech.cashentery.ui.screens.home.formatMillisToDate
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
+import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
+import com.ruchitech.cashentery.ui.theme.sfMediumFont
+import com.ruchitech.cashentery.ui.theme.sfSemibold
 
 @Composable
-fun TransactionItem(item: AddTransactionData) {
+fun TransactionItem(item: Transaction) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(MainBackgroundSurface)
     ) {
         Row(
             modifier = Modifier
@@ -45,25 +50,67 @@ fun TransactionItem(item: AddTransactionData) {
         ) {
             Text(
                 text = item.tag ?: "",
-                fontSize = 12.sp.nonScaledSp,
+                fontSize = 14.sp.nonScaledSp,
                 modifier = Modifier
             )
             Text(
                 text = formatToINR(item.amount!!.toDouble()),
                 fontWeight = FontWeight.Bold,
-                fontSize = 12.sp.nonScaledSp,
+                fontSize = 14.sp.nonScaledSp,
                 color = if (item.type == Type.CREDIT) Income else Expense,
                 modifier = Modifier
             )
         }
 
-        Text(
-            text = item.remarks ?: "",
-            fontSize = 9.sp.nonScaledSp,
-            color = Color.Gray,
-            modifier = Modifier.padding(horizontal = 10.dp)
+        Row(modifier = Modifier.fillMaxWidth().padding(end = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            var statusColor = Color(0xFF4CAF50)
+            val statusStr =
+                when (item.status) {
+                    Status.PENDING -> {
+                        statusColor = Color(0xFFFF9800)
+                        "Pending"
+                    }
 
-        )
+                    Status.CLEARED -> {
+                        statusColor = Color(0xFF4CAF50)
+                        "Cleared"
+                    }
+
+                    Status.OVERDUE -> {
+                        statusColor = Color(0xFFF44336)
+                        "Overdue"
+                    }
+
+                    Status.VOID -> {
+                        statusColor = Color(0xFFE040FB)
+                        "Void"
+                    }
+
+                    null -> {
+                        statusColor = Color(0xFF4CAF50)
+                        "Cleared"
+                    }
+                }
+            Text(
+                text = item.remarks ?: "",
+                fontSize = 12.sp.nonScaledSp,
+                color = Color.DarkGray,
+                lineHeight = 14.sp.nonScaledSp,
+                modifier = Modifier.weight(1f).padding(start = 10.dp)
+
+            )
+
+            Text(
+                text = statusStr,
+                fontSize = 10.sp.nonScaledSp,
+                fontFamily = sfSemibold,
+                color = statusColor,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(0.2F)
+            )
+        }
+
+
         Spacer(modifier = Modifier.height(10.dp))
 
     }
@@ -75,7 +122,7 @@ fun TransactionHeader(u: String?, timeInMiles: Long?) {
         modifier = Modifier
             .fillMaxWidth()
             .height(40.dp)
-            .background(Color(0xFFF6F7F9))
+            .background(Color(0xFFDACB9F))
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -84,7 +131,8 @@ fun TransactionHeader(u: String?, timeInMiles: Long?) {
         Text(
             text = formatMillisToDate(timeInMiles?: 0),
             color = Color.DarkGray,
-            fontSize = 11.sp.nonScaledSp
+            fontSize = 12.sp.nonScaledSp,
+            fontFamily = sfMediumFont
         )
     }
 }
