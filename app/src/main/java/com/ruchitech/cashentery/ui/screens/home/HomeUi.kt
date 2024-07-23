@@ -1,6 +1,5 @@
 package com.ruchitech.cashentery.ui.screens.home
 
-import android.os.Handler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +27,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,10 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ruchitech.cashentery.MainActivity
-import com.ruchitech.cashentery.ui.screens.AutoComplete
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
-import com.ruchitech.cashentery.ui.screens.add_transactions.Type
-import com.ruchitech.cashentery.ui.screens.common_ui.DropdownSearch
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.screens.common_ui.SignOutConfirmationDialog
 import com.ruchitech.cashentery.ui.theme.Expense
@@ -102,9 +97,9 @@ fun HomeUi(
         mutableStateOf(false)
     }
     var isRefreshing by remember { mutableStateOf(false) }
-val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     // SwipeRefreshState keeps track of the refresh state
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = isRefreshing)
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
     Scaffold(
         topBar = {
             Row(
@@ -229,7 +224,8 @@ val scope = rememberCoroutineScope()
                 }
             }
         }
-    )}
+    )
+}
 
 @Composable
 fun TransactionList(
@@ -304,7 +300,7 @@ private fun TransactionItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "last: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
+                    text = "last: ${formatMillisToDate(transaction.timeInMillis ?: 0)}",
                     fontSize = 12.sp.nonScaledSp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.DarkGray
@@ -325,7 +321,7 @@ private fun TransactionItem(
                 text = "last was ${formatToINR(transaction.amount ?: 0.0)}",
                 fontSize = 12.sp.nonScaledSp,
                 fontFamily = FontFamily.SansSerif,
-                color = if (transaction.type == Type.CREDIT) Income else Expense,
+                color = if (transaction.type == Transaction.Type.CREDIT) Income else Expense,
                 modifier = Modifier.padding(end = 10.dp)
             )
         }

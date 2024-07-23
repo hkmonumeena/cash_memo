@@ -60,7 +60,7 @@ class AddTransactionViewModel @Inject constructor(
                 "date" to transaction.date,
                 "remarks" to transaction.remarks,
                 "tag" to transaction.tag,
-                "timeInMiles" to transaction.timeInMiles,
+                "timeInMiles" to transaction.timeInMillis,
                 "transactionNumber" to transaction.transactionNumber,
                 "type" to transaction.type,
                 "status" to transaction.status

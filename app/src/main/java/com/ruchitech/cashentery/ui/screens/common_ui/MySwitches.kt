@@ -18,9 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruchitech.cashentery.ui.screens.add_transactions.Account
-import com.ruchitech.cashentery.ui.screens.add_transactions.Status
-import com.ruchitech.cashentery.ui.screens.add_transactions.Type
+import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.theme.TempColor
 import com.ruchitech.cashentery.ui.theme.TempColor2
 import com.ruchitech.cashentery.ui.theme.TempColor3
@@ -31,10 +29,10 @@ import java.util.Locale
 @Composable
 fun PaymentTypeSwitch(
     modifier: Modifier,
-    initialType: Type,
-    onTypeChange: (type: Type, typeText: String) -> Unit,
+    initialType: Transaction.Type,
+    onTypeChange: (type: Transaction.Type, typeText: String) -> Unit,
 ) {
-    var isCredit by remember { mutableStateOf(initialType == Type.CREDIT) }
+    var isCredit by remember { mutableStateOf(initialType == Transaction.Type.CREDIT) }
     Row(
         modifier = modifier.background(
             Color(0xFFDACB9F),
@@ -52,7 +50,7 @@ fun PaymentTypeSwitch(
                     indication = null
                 ) {
                     isCredit = true
-                    onTypeChange(Type.CREDIT, "Credit")
+                    onTypeChange(Transaction.Type.CREDIT, "Credit")
                 }) {
             Text(
                 text = " Credit ".uppercase(Locale.getDefault()),
@@ -72,7 +70,7 @@ fun PaymentTypeSwitch(
                     indication = null
                 ) {
                     isCredit = false
-                    onTypeChange(Type.DEBIT, "Debit")
+                    onTypeChange(Transaction.Type.DEBIT, "Debit")
                 }) {
             Text(
                 text = "  Debit ".uppercase(Locale.ROOT),
@@ -88,11 +86,11 @@ fun PaymentTypeSwitch(
 @Composable
 fun TransactionAccountSwitch(
     modifier: Modifier,
-    initialType: Account,
-    onTypeChange: (type: Account, typeText: String) -> Unit,
+    initialType: Transaction.Account,
+    onTypeChange: (type: Transaction.Account, typeText: String) -> Unit,
 ) {
     var accountType by remember {
-        mutableStateOf(initialType == Account.ONLINE)
+        mutableStateOf(initialType == Transaction.Account.ONLINE)
     }
     Row(
         modifier = modifier.background(
@@ -111,7 +109,7 @@ fun TransactionAccountSwitch(
                     indication = null
                 ) {
                     accountType = true
-                    onTypeChange(Account.ONLINE, "ONLINE")
+                    onTypeChange(Transaction.Account.ONLINE, "ONLINE")
                 }) {
             Text(
                 text = "ONLINE",
@@ -131,7 +129,7 @@ fun TransactionAccountSwitch(
                     indication = null
                 ) {
                     accountType = false
-                    onTypeChange(Account.CASH, " CASH ")
+                    onTypeChange(Transaction.Account.CASH, " CASH ")
                 }) {
             Text(
                 text = " CASH ",
@@ -149,15 +147,15 @@ fun TransactionAccountSwitch(
 @Composable
 fun TransactionStatusSwitch(
     modifier: Modifier,
-    initialType: Status,
-    onTypeChange: (type: Status, typeText: String) -> Unit,
+    initialType: Transaction.Status,
+    onTypeChange: (type: Transaction.Status, typeText: String) -> Unit,
 ) {
     var accountType by remember {
         mutableIntStateOf(when(initialType){
-            Status.PENDING -> 1
-            Status.CLEARED -> 2
-            Status.OVERDUE -> 3
-            Status.VOID -> 4
+            Transaction.Status.PENDING -> 1
+            Transaction.Status.CLEARED -> 2
+            Transaction.Status.OVERDUE -> 3
+            Transaction.Status.VOID -> 4
         })
     }
     Row(
@@ -177,7 +175,7 @@ fun TransactionStatusSwitch(
                     indication = null
                 ) {
                     accountType = 2
-                    onTypeChange(Status.CLEARED, "CLEARED")
+                    onTypeChange(Transaction.Status.CLEARED, "CLEARED")
                 }) {
             Text(
                 text = "CLEARED",
@@ -197,7 +195,7 @@ fun TransactionStatusSwitch(
                     indication = null
                 ) {
                     accountType = 1
-                    onTypeChange(Status.PENDING, "PENDING")
+                    onTypeChange(Transaction.Status.PENDING, "PENDING")
                 }) {
             Text(
                 text = "PENDING",
@@ -217,7 +215,7 @@ fun TransactionStatusSwitch(
                     indication = null
                 ) {
                     accountType = 3
-                    onTypeChange(Status.OVERDUE, "OVERDUE")
+                    onTypeChange(Transaction.Status.OVERDUE, "OVERDUE")
                 }) {
             Text(
                 text = "OVERDUE",
@@ -238,7 +236,7 @@ fun TransactionStatusSwitch(
                     indication = null
                 ) {
                     accountType = 4
-                    onTypeChange(Status.VOID, "VOID")
+                    onTypeChange(Transaction.Status.VOID, "VOID")
                 }) {
             Text(
                 text = "    VOID    ",

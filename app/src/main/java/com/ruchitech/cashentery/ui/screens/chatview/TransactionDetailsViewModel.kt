@@ -52,7 +52,7 @@ class TransactionDetailsViewModel @Inject constructor(
     fun getTransactionDetails(transactionId: String): List<Transaction> {
         val listType = object : TypeToken<List<Transaction>>() {}.type
         val transactions: List<Transaction> = Gson().fromJson(transactionId, listType)
-        _transactionsFlow.value = transactions.sortedBy { it.timeInMiles }
+        _transactionsFlow.value = transactions.sortedBy { it.timeInMillis }
         return transactions
     }
 
@@ -67,7 +67,7 @@ class TransactionDetailsViewModel @Inject constructor(
         appPreference.categoriesList = categories.value
         val currentTransactions = _transactionsFlow.value.toMutableList()
         currentTransactions.add(newTransaction)
-        val sortedTransactions = currentTransactions.sortedBy { it.timeInMiles }
+        val sortedTransactions = currentTransactions.sortedBy { it.timeInMillis }
         _transactionsFlow.value = sortedTransactions
     }
 
@@ -92,7 +92,7 @@ class TransactionDetailsViewModel @Inject constructor(
             "date" to transaction.date,
             "remarks" to transaction.remarks,
             "tag" to transaction.tag,
-            "timeInMiles" to transaction.timeInMiles,
+            "timeInMiles" to transaction.timeInMillis,
             "transactionNumber" to transaction.transactionNumber,
             "type" to transaction.type,
             "status" to transaction.status

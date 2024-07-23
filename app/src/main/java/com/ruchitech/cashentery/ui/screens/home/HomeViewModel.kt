@@ -1,14 +1,12 @@
 package com.ruchitech.cashentery.ui.screens.home
 
 import android.util.Log
-import android.util.Log.e
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ruchitech.cashentery.helper.Event
 import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
-import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -73,16 +71,16 @@ class HomeViewModel @Inject constructor(
                 }
 
                 _sumOfExpense.value =
-                    transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+                    transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
 
                 _sumOfIncome.value =
-                    transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
+                    transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
-                _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+                _transactionsFlow.value = transactions.sortedByDescending { it.timeInMillis }
                 _groupByTag.value = transactions.groupBy {
                     it.tag
                 }.mapValues { entry ->
-                    entry.value.sortedByDescending { it.timeInMiles }
+                    entry.value.sortedByDescending { it.timeInMillis }
                 }
                 appPreference.categoriesList = transactions.map { it.tag?:"" }.distinct().toList()
             }.addOnFailureListener { exception ->
@@ -100,14 +98,14 @@ class HomeViewModel @Inject constructor(
         }
 
         _sumOfExpense.value =
-            transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+            transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
 
         _sumOfIncome.value =
-            transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
+            transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
-        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMillis }
 
-        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
+        _groupByTag.value = transactions.sortedByDescending { it.timeInMillis }.groupBy { it.tag }
     }
 
     private fun deleteTransaction(deleteId: String) {
@@ -120,14 +118,14 @@ class HomeViewModel @Inject constructor(
         }
 
         _sumOfExpense.value =
-            transactions.filter { it.type == Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+            transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
 
         _sumOfIncome.value =
-            transactions.filter { it.type == Type.CREDIT }.sumOf { it.amount ?: 0.0 }
+            transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
-        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMillis }
 
-        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
+        _groupByTag.value = transactions.sortedByDescending { it.timeInMillis }.groupBy { it.tag }
     }
 
     fun signout(){

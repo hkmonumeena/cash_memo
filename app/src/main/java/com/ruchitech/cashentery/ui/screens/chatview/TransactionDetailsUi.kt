@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -62,15 +61,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.Result
-import com.ruchitech.cashentery.ui.screens.add_transactions.Account
-import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.add_transactions.AmountField
 import com.ruchitech.cashentery.ui.screens.add_transactions.DateField
 import com.ruchitech.cashentery.ui.screens.add_transactions.RemarksField
-import com.ruchitech.cashentery.ui.screens.add_transactions.Status
 import com.ruchitech.cashentery.ui.screens.add_transactions.SubmitButton
 import com.ruchitech.cashentery.ui.screens.add_transactions.TagTextField
-import com.ruchitech.cashentery.ui.screens.add_transactions.Type
+import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.DeleteConfirmationDialog
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.screens.common_ui.LoadingScreen
@@ -116,10 +112,10 @@ fun TransactionDetailsUi(
     val filteredTransactions by remember(data, selectedTabIndex) {
         derivedStateOf {
             when (tabs[selectedTabIndex]) {
-                "Cleared" -> data.filter { it.status == Status.CLEARED }
-                "Pending" -> data.filter { it.status == Status.PENDING }
-                "Overdue" -> data.filter { it.status == Status.OVERDUE }
-                "Void" -> data.filter { it.status == Status.VOID }
+                "Cleared" -> data.filter { it.status == Transaction.Status.CLEARED }
+                "Pending" -> data.filter { it.status == Transaction.Status.PENDING }
+                "Overdue" -> data.filter { it.status == Transaction.Status.OVERDUE }
+                "Void" -> data.filter { it.status == Transaction.Status.VOID }
                 else -> data // All transactions
             }
         }
@@ -256,26 +252,26 @@ fun TransactionDetailsUi(
             ) {
                 StatusSummary(
                     title = "",
-                    data = data.filter { it.type == Type.CREDIT },
+                    data = data.filter { it.type == Transaction.Type.CREDIT },
                     statuses = listOf(
-                        Status.PENDING to "a",
-                        Status.PENDING to "Pending",
-                        Status.OVERDUE to "Overdue",
-                        Status.CLEARED to "Cleared",
-                        Status.VOID to "Void"
+                        Transaction.Status.PENDING to "a",
+                        Transaction.Status.PENDING to "Pending",
+                        Transaction.Status.OVERDUE to "Overdue",
+                        Transaction.Status.CLEARED to "Cleared",
+                        Transaction.Status.VOID to "Void"
                     ),
                     type = 0
                 )
                 Spacer(modifier = Modifier.width(5.dp))
                 StatusSummary(
                     title = "",
-                    data = data.filter { it.type == Type.DEBIT },
+                    data = data.filter { it.type == Transaction.Type.DEBIT },
                     statuses = listOf(
-                        Status.PENDING to "a",
-                        Status.PENDING to "Pending",
-                        Status.OVERDUE to "Overdue",
-                        Status.CLEARED to "Cleared",
-                        Status.VOID to "Void",
+                        Transaction.Status.PENDING to "a",
+                        Transaction.Status.PENDING to "Pending",
+                        Transaction.Status.OVERDUE to "Overdue",
+                        Transaction.Status.CLEARED to "Cleared",
+                        Transaction.Status.VOID to "Void",
                     ),
                     type = 1
                 )
@@ -321,7 +317,7 @@ fun TransactionDetailsUi(
 fun StatusSummary(
     title: String,
     data: List<Transaction>,
-    statuses: List<Pair<Status, String>>,
+    statuses: List<Pair<Transaction.Status, String>>,
     type: Int,
 ) {
     Column {
@@ -367,7 +363,7 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
             modifier = Modifier
                 .defaultMinSize(minWidth = 200.dp)
                 .fillMaxWidth(0.7F)
-                .align(if (transaction.type == Type.CREDIT) Alignment.CenterStart else Alignment.CenterEnd)
+                .align(if (transaction.type == Transaction.Type.CREDIT) Alignment.CenterStart else Alignment.CenterEnd)
                 .combinedClickable(onLongClick = {
                     onLongClick()
                 }, onClick = {
@@ -381,7 +377,7 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                 text = (formatToINR(transaction.amount ?: 0.0)),
                 fontFamily = sfSemibold,
                 fontSize = 16.sp.nonScaledSp,
-                color = if (transaction.type == Type.CREDIT) Income else Expense,
+                color = if (transaction.type == Transaction.Type.CREDIT) Income else Expense,
                 modifier = Modifier.height(20.dp)
             )
             SpacerHeight(5)
@@ -398,22 +394,22 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 val paymentStr = when (transaction.type) {
-                    Type.CREDIT -> {
+                    Transaction.Type.CREDIT -> {
                         when (transaction.status) {
-                            Status.PENDING -> "Pending"
-                            Status.CLEARED -> "Received on"
-                            Status.OVERDUE -> "Overdue"
-                            Status.VOID -> "Void"
+                            Transaction.Status.PENDING -> "Pending"
+                            Transaction.Status.CLEARED -> "Received on"
+                            Transaction.Status.OVERDUE -> "Overdue"
+                            Transaction.Status.VOID -> "Void"
                             null -> "Void"
                         }
                     }
 
-                    Type.DEBIT -> {
+                    Transaction.Type.DEBIT -> {
                         when (transaction.status) {
-                            Status.PENDING -> "Pending"
-                            Status.CLEARED -> "Paid on"
-                            Status.OVERDUE -> "Overdue"
-                            Status.VOID -> "Void"
+                            Transaction.Status.PENDING -> "Pending"
+                            Transaction.Status.CLEARED -> "Paid on"
+                            Transaction.Status.OVERDUE -> "Overdue"
+                            Transaction.Status.VOID -> "Void"
                             null -> "Void"
                         }
                     }
@@ -421,7 +417,7 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                     null -> "Void"
                 }
                 Text(
-                    text = "$paymentStr: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
+                    text = "$paymentStr: ${formatMillisToDate(transaction.timeInMillis ?: 0)}",
                     fontSize = 11.sp.nonScaledSp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.Gray
@@ -429,22 +425,22 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                 var statusColor = Color(0xFF4CAF50)
                 val statusStr =
                     when (transaction.status) {
-                        Status.PENDING -> {
+                        Transaction.Status.PENDING -> {
                             statusColor = Color(0xFFFF9800)
                             "Pending"
                         }
 
-                        Status.CLEARED -> {
+                        Transaction.Status.CLEARED -> {
                             statusColor = Color(0xFF4CAF50)
                             "Cleared"
                         }
 
-                        Status.OVERDUE -> {
+                        Transaction.Status.OVERDUE -> {
                             statusColor = Color(0xFFF44336)
                             "Overdue"
                         }
 
-                        Status.VOID -> {
+                        Transaction.Status.VOID -> {
                             statusColor = Color(0xFF9E9E9E)
                             "Void"
                         }
@@ -595,7 +591,7 @@ private fun EditTransactionScreen(
                             modifier = Modifier.weight(1f), initialValue = newTransaction?.date
                         ) { date: String?, timeInMiles: Long? ->
                             newTransaction = newTransaction?.copy(
-                                date = date, timeInMiles = timeInMiles
+                                date = date, timeInMillis = timeInMiles
                             )
                         }
                     }
@@ -627,8 +623,8 @@ private fun EditTransactionScreen(
                         ) {
                             TransactionAccountSwitch(
                                 modifier = Modifier,
-                                initialType = newTransaction?.account ?: Account.ONLINE
-                            ) { type: Account, _: String ->
+                                initialType = newTransaction?.account ?: Transaction.Account.ONLINE
+                            ) { type: Transaction.Account, _: String ->
                                 newTransaction = newTransaction?.copy(account = type)
                             }
                         }
@@ -641,7 +637,7 @@ private fun EditTransactionScreen(
                         ) {
                             PaymentTypeSwitch(
                                 modifier = Modifier,
-                                initialType = newTransaction?.type ?: Type.DEBIT
+                                initialType = newTransaction?.type ?: Transaction.Type.DEBIT
                             ) { type, _ ->
                                 newTransaction = newTransaction?.copy(type = type)
                             }
@@ -651,8 +647,8 @@ private fun EditTransactionScreen(
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         TransactionStatusSwitch(
                             modifier = Modifier,
-                            initialType = newTransaction?.status ?: Status.CLEARED
-                        ) { type: Status, _: String ->
+                            initialType = newTransaction?.status ?: Transaction.Status.CLEARED
+                        ) { type: Transaction.Status, _: String ->
                             newTransaction = newTransaction?.copy(status = type)
                         }
                     }
@@ -668,7 +664,7 @@ private fun EditTransactionScreen(
             }
         }
 
-        LoadingScreen(showLoading = viewModel.showLoading.value,"Updating transaction...")
+        LoadingScreen(showLoading = viewModel.showLoading.value, "Updating transaction...")
 
     }
 

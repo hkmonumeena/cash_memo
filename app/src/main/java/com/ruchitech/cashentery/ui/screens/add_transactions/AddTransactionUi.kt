@@ -5,23 +5,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,15 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.MainActivity
-import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.getInitialTransaction
 import com.ruchitech.cashentery.ui.screens.common_ui.LoadingScreen
@@ -118,15 +106,15 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 DateField(
                     modifier = Modifier.weight(1f),
                     initialValue = newTransaction.date
-                ) { date: String?, timeInMiles: Long? ->
+                ) { date: String?, timeInMillis: Long? ->
                     newTransaction = newTransaction.copy(
                         date = date,
-                        timeInMiles = timeInMiles
+                        timeInMillis = timeInMillis
                     )
                 }
             }
             SpacerHeight(10)
-            TagTextField(modifier = Modifier, initialValue = newTransaction.tag,tags) { newTag ->
+            TagTextField(modifier = Modifier, initialValue = newTransaction.tag, tags) { newTag ->
                 newTransaction = newTransaction.copy(tag = newTag)
             }
 
@@ -148,8 +136,8 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 ) {
                     TransactionAccountSwitch(
                         modifier = Modifier,
-                        initialType = Account.ONLINE
-                    ) { type: Account, _: String ->
+                        initialType = Transaction.Account.ONLINE
+                    ) { type: Transaction.Account, _: String ->
                         newTransaction = newTransaction.copy(account = type)
                     }
                 }
@@ -161,7 +149,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 ) {
                     PaymentTypeSwitch(
                         modifier = Modifier,
-                        initialType = Type.DEBIT
+                        initialType = Transaction.Type.DEBIT
                     ) { type, _ ->
                         newTransaction = newTransaction.copy(type = type)
                     }
@@ -171,8 +159,8 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 TransactionStatusSwitch(
                     modifier = Modifier,
-                    initialType = Status.CLEARED
-                ) { type: Status, _: String ->
+                    initialType = Transaction.Status.CLEARED
+                ) { type: Transaction.Status, _: String ->
                     newTransaction = newTransaction.copy(status = type)
                 }
             }

@@ -22,8 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
-import com.ruchitech.cashentery.ui.screens.add_transactions.Status
-import com.ruchitech.cashentery.ui.screens.add_transactions.Type
 import com.ruchitech.cashentery.ui.screens.home.formatMillisToDate
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import com.ruchitech.cashentery.ui.theme.Expense
@@ -57,7 +55,7 @@ fun TransactionItem(item: Transaction) {
                 text = formatToINR(item.amount!!.toDouble()),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp.nonScaledSp,
-                color = if (item.type == Type.CREDIT) Income else Expense,
+                color = if (item.type == Transaction.Type.CREDIT) Income else Expense,
                 modifier = Modifier
             )
         }
@@ -66,22 +64,22 @@ fun TransactionItem(item: Transaction) {
             var statusColor = Color(0xFF4CAF50)
             val statusStr =
                 when (item.status) {
-                    Status.PENDING -> {
+                    Transaction.Status.PENDING -> {
                         statusColor = Color(0xFFFF9800)
                         "Pending"
                     }
 
-                    Status.CLEARED -> {
+                    Transaction.Status.CLEARED -> {
                         statusColor = Color(0xFF4CAF50)
                         "Cleared"
                     }
 
-                    Status.OVERDUE -> {
+                    Transaction.Status.OVERDUE -> {
                         statusColor = Color(0xFFF44336)
                         "Overdue"
                     }
 
-                    Status.VOID -> {
+                    Transaction.Status.VOID -> {
                         statusColor = Color(0xFFE040FB)
                         "Void"
                     }

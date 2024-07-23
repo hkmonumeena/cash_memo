@@ -39,7 +39,7 @@ class TransactionsViewModel @Inject constructor(private val appPreference: AppPr
 
                 val transactionList = result.toObjects(Transaction::class.java)
                 //   transactions.value = transactionList
-                _transactionsFlow.value = transactionList.sortedByDescending { it.timeInMiles }
+                _transactionsFlow.value = transactionList.sortedByDescending { it.timeInMillis }
                 /*   _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.timeInMiles.toString() }.mapValues { entry ->
                        entry.value.sortedByDescending { it.timeInMiles }
                    }*/
@@ -53,11 +53,11 @@ class TransactionsViewModel @Inject constructor(private val appPreference: AppPr
 
     private fun groupTransactionsByDate(transactions: List<Transaction>): Map<String?, List<Transaction>> {
         return transactions
-            .sortedByDescending { it.timeInMiles }
+            .sortedByDescending { it.timeInMillis }
             .groupBy {
                 // Convert timeInMiles to a Date object
                 val calendar = Calendar.getInstance()
-                calendar.timeInMillis = it.timeInMiles ?: 0
+                calendar.timeInMillis = it.timeInMillis ?: 0
                 // Extract the date part as a string (e.g., "2024-06-26")
                 "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH) + 1}-${
                     calendar.get(
@@ -66,7 +66,7 @@ class TransactionsViewModel @Inject constructor(private val appPreference: AppPr
                 }"
             }
             .mapValues { entry ->
-                entry.value.sortedByDescending { it.timeInMiles }
+                entry.value.sortedByDescending { it.timeInMillis }
             }
     }
 

@@ -40,15 +40,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
-import com.ruchitech.cashentery.ui.screens.add_transactions.Status
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfMediumFont
 import kotlinx.coroutines.launch
+
 fun filterTransactionsByStatus(
     transactions: Map<String?, List<Transaction>>?,
-    status: Status
+    status: Transaction.Status
 ): Map<String?, List<Transaction>>? {
     return transactions?.mapValues { entry ->
         entry.value.filter { it.status == status }
@@ -66,10 +66,10 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
     val filteredTransactions by remember(transactions, selectedTabIndex) {
         derivedStateOf {
             when (tabs[selectedTabIndex]) {
-                "Cleared" -> filterTransactionsByStatus(transactions, Status.CLEARED)
-                "Pending" -> filterTransactionsByStatus(transactions, Status.PENDING)
-                "Overdue" -> filterTransactionsByStatus(transactions, Status.OVERDUE)
-                "Void" -> filterTransactionsByStatus(transactions, Status.VOID)
+                "Cleared" -> filterTransactionsByStatus(transactions, Transaction.Status.CLEARED)
+                "Pending" -> filterTransactionsByStatus(transactions, Transaction.Status.PENDING)
+                "Overdue" -> filterTransactionsByStatus(transactions, Transaction.Status.OVERDUE)
+                "Void" -> filterTransactionsByStatus(transactions, Transaction.Status.VOID)
                 else -> transactions // All transactions
             }
         }
@@ -129,7 +129,7 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
                         text = tab,
                         fontSize = 16.sp,
                         color = Color.Black,
-                        modifier = Modifier.padding(vertical =14.dp),
+                        modifier = Modifier.padding(vertical = 14.dp),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -141,16 +141,16 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
                 .weight(1f),
             verticalAlignment = Alignment.Top
         ) { page ->
-            if (filteredTransactions.isNullOrEmpty()){
+            if (filteredTransactions.isNullOrEmpty()) {
                 EmptyTransactionUi()
-            }else{
+            } else {
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     filteredTransactions?.forEach { (t, u) ->
                         item {
-                            TransactionHeader(t, u[0].timeInMiles)
+                            TransactionHeader(t, u[0].timeInMillis)
                         }
                         itemsIndexed(u) { _, item ->
                             TransactionItem(item)

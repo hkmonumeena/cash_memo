@@ -60,7 +60,7 @@ import com.ruchitech.cashentery.ui.theme.sfMediumFont
 @Composable
 fun AmountField(
     modifier: Modifier,
-    transactionType: Type?,
+    transactionType: Transaction.Type?,
     initialAmount: String = "",
     onValueChange: (value: Double?) -> Unit,
 ) {
@@ -77,7 +77,7 @@ fun AmountField(
             modifier = Modifier
                 .size(25.dp)
                 .padding(2.dp),
-            tint = if (transactionType == Type.CREDIT) Income else Expense
+            tint = if (transactionType == Transaction.Type.CREDIT) Income else Expense
         )
         TextField(
             value = amount,
@@ -103,7 +103,7 @@ fun AmountField(
                 .onFocusChanged {
                 },
             textStyle = TextStyle(
-                color = if (transactionType == Type.CREDIT) Income else Expense,
+                color = if (transactionType == Transaction.Type.CREDIT) Income else Expense,
                 fontFamily = montserrat_semibold,
                 fontSize = 16.sp.nonScaledSp
             ),
@@ -132,7 +132,7 @@ fun AmountField(
 fun DateField(
     modifier: Modifier,
     initialValue: String?,
-    onValueChange: (date: String?, timeInMiles: Long?) -> Unit,
+    onValueChange: (date: String?, timeInMillis: Long?) -> Unit,
 ) {
     var isDatePickerVisible by remember { mutableStateOf(false) }
     var selectedDate by remember {
@@ -338,7 +338,7 @@ fun RemarksField(initialValue: String?, onValueChange: (value: String?) -> Unit)
 }
 
 @Composable
-fun SubmitButton(transactionType: Type?, onClick: () -> Unit) {
+fun SubmitButton(transactionType: Transaction.Type?, onClick: () -> Unit) {
     Button(
         onClick = {
             onClick()
@@ -346,7 +346,7 @@ fun SubmitButton(transactionType: Type?, onClick: () -> Unit) {
             .padding(top = 16.dp, start = 16.dp, end = 16.dp),
         shape = RoundedCornerShape(5.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (transactionType == Type.CREDIT) Color(
+            containerColor = if (transactionType == Transaction.Type.CREDIT) Color(
                 0xFF4CAF50
             ).copy(alpha = 0.8F) else Color(0xFFF44336).copy(alpha = 0.8F)
         )
