@@ -75,6 +75,7 @@ import com.ruchitech.cashentery.ui.screens.common_ui.SpacerHeight
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerWidth
 import com.ruchitech.cashentery.ui.screens.common_ui.TransactionAccountSwitch
 import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusSwitch
+import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusTable
 import com.ruchitech.cashentery.ui.screens.home.formatMillisToDate
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import com.ruchitech.cashentery.ui.theme.Expense
@@ -85,7 +86,6 @@ import com.ruchitech.cashentery.ui.theme.montserrat_medium
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfMediumFont
 import com.ruchitech.cashentery.ui.theme.sfSemibold
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -244,6 +244,8 @@ fun TransactionDetailsUi(
                     }
                 }
             }
+
+           // TransactionStatusTable()
 
             Row(
                 modifier = Modifier
@@ -417,7 +419,7 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                     null -> "Void"
                 }
                 Text(
-                    text = "$paymentStr: ${formatMillisToDate(transaction.timeInMillis ?: 0)}",
+                    text = "$paymentStr: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
                     fontSize = 11.sp.nonScaledSp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.Gray
@@ -482,15 +484,7 @@ private fun EditTransactionScreen(
             addNewTransaction = dataToEdit
         }
     }
-
     var showDeleteDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        // Delay added to ensure the Composable is fully composed before requesting focus
-        delay(300)
-        //   amountFocus.requestFocus()
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -591,7 +585,7 @@ private fun EditTransactionScreen(
                             modifier = Modifier.weight(1f), initialValue = newTransaction?.date
                         ) { date: String?, timeInMiles: Long? ->
                             newTransaction = newTransaction?.copy(
-                                date = date, timeInMillis = timeInMiles
+                                date = date, timeInMiles = timeInMiles
                             )
                         }
                     }
@@ -663,10 +657,6 @@ private fun EditTransactionScreen(
                 }
             }
         }
-
         LoadingScreen(showLoading = viewModel.showLoading.value, "Updating transaction...")
-
     }
-
-
 }

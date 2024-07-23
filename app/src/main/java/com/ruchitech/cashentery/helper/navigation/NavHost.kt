@@ -1,6 +1,5 @@
 package com.ruchitech.cashentery.helper.navigation
 
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
@@ -28,12 +27,11 @@ import com.ruchitech.cashentery.ui.screens.mobile_auth.VerifyOtpUi
 import com.ruchitech.cashentery.ui.screens.mobile_auth.VerifyOtpViewModel
 import com.ruchitech.cashentery.ui.screens.transactions.TransactionUi
 import com.ruchitech.cashentery.ui.screens.transactions.TransactionsViewModel
-import java.util.Date
 
 private fun navigateTo(
     navController: NavHostController,
     screen: Screen,
-    popUpToCurrent: Boolean = false
+    popUpToCurrent: Boolean = false,
 ) {
     navController.navigate(screen) {
         if (popUpToCurrent) {
@@ -48,7 +46,7 @@ fun NavigationComponent(
     navHostController: NavHostController,
     snackbarHostState: SnackbarHostState,
     paddingValues: PaddingValues,
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
 ) {
     NavHost(
         navController = navHostController,
@@ -75,6 +73,9 @@ fun NavigationComponent(
             val viewModel = hiltViewModel<VerifyOtpViewModel>()
             val args = it.toRoute<Screen.VerifyOtp>()
             VerifyOtpUi(
+                onBack = {
+                    navHostController.popBackStack()
+                },
                 viewModel = viewModel,
                 onAuthenticated = {
                     navHostController.navigate(Screen.Home) {

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  *
  * @property id A unique identifier for the transaction.
  * @property date The date of the transaction in a string format (e.g., "2024-07-23").
- * @property timeInMillis The timestamp of the transaction in milliseconds since epoch.
+ * @property timeInMiles The timestamp of the transaction in milliseconds since epoch.
  * @property type The type of transaction, which can be CREDIT or DEBIT.
  * @property account The account type involved in the transaction, which can be ONLINE or CASH.
  * @property transactionNumber A unique number assigned to the transaction.
@@ -36,7 +36,7 @@ data class Transaction(
      * The timestamp of the transaction in milliseconds since epoch.
      */
     @SerialName("timeInMiles")
-    val timeInMillis: Long? = null,
+    val timeInMiles: Long? = null,
 
     /**
      * The type of transaction.

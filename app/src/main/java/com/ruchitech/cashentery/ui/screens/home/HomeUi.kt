@@ -48,9 +48,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ruchitech.cashentery.MainActivity
+import com.ruchitech.cashentery.helper.calculateSum
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.screens.common_ui.SignOutConfirmationDialog
+import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusTable
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
@@ -89,6 +91,7 @@ fun HomeUi(
     onSignOut: () -> Unit,
 ) {
     val transactions by viewModel.groupByTag.collectAsState()
+    val singleTrnx by viewModel.transactionsFlow.collectAsState()
     val sumOfIncome by viewModel.sumOfIncome.collectAsState()
     val sumOfExpense by viewModel.sumOfExpense.collectAsState()
     val context = LocalContext.current
@@ -193,6 +196,16 @@ fun HomeUi(
                             navigateToTransactions()
                         }
                     }
+                    TransactionStatusTable(
+                        creditPending = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.PENDING),
+                        creditCleared = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.CLEARED),
+                        creditOverdue = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.OVERDUE),
+                        creditVoid = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.VOID),
+                        debtPending = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.PENDING),
+                        debtCleared = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.CLEARED),
+                        debtOverdue = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.OVERDUE),
+                        debtVoid = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.VOID)
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -300,7 +313,7 @@ private fun TransactionItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "last: ${formatMillisToDate(transaction.timeInMillis ?: 0)}",
+                    text = "last: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
                     fontSize = 12.sp.nonScaledSp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.DarkGray

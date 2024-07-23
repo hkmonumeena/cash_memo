@@ -109,7 +109,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 ) { date: String?, timeInMillis: Long? ->
                     newTransaction = newTransaction.copy(
                         date = date,
-                        timeInMillis = timeInMillis
+                        timeInMiles = timeInMillis
                     )
                 }
             }

@@ -76,11 +76,11 @@ class HomeViewModel @Inject constructor(
                 _sumOfIncome.value =
                     transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
-                _transactionsFlow.value = transactions.sortedByDescending { it.timeInMillis }
+                _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
                 _groupByTag.value = transactions.groupBy {
                     it.tag
                 }.mapValues { entry ->
-                    entry.value.sortedByDescending { it.timeInMillis }
+                    entry.value.sortedByDescending { it.timeInMiles }
                 }
                 appPreference.categoriesList = transactions.map { it.tag?:"" }.distinct().toList()
             }.addOnFailureListener { exception ->
@@ -103,9 +103,9 @@ class HomeViewModel @Inject constructor(
         _sumOfIncome.value =
             transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
-        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMillis }
+        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
 
-        _groupByTag.value = transactions.sortedByDescending { it.timeInMillis }.groupBy { it.tag }
+        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
     }
 
     private fun deleteTransaction(deleteId: String) {
@@ -123,9 +123,9 @@ class HomeViewModel @Inject constructor(
         _sumOfIncome.value =
             transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
-        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMillis }
+        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
 
-        _groupByTag.value = transactions.sortedByDescending { it.timeInMillis }.groupBy { it.tag }
+        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
     }
 
     fun signout(){

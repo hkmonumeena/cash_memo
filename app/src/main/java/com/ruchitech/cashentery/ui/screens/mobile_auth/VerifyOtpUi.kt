@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,8 +18,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -45,7 +48,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.R
+import com.ruchitech.cashentery.ui.screens.common_ui.SpacerHeight
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -54,6 +59,7 @@ fun VerifyOtpUi(
     viewModel: VerifyOtpViewModel,
     onAuthenticated: () -> Unit,
     verificationId: String?,
+    onBack: () -> Unit,
 ) {
 //    val state by viewModel.authState.collectAsState()
     LaunchedEffect(true) {
@@ -75,7 +81,7 @@ fun VerifyOtpUi(
         ) {
             Spacer(modifier = Modifier.height(150.dp))
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_background),
+                painter = painterResource(id = R.drawable.ic_otp),
                 contentDescription = "mobile icon",
                 modifier = Modifier
                     .size(80.dp)
@@ -87,21 +93,20 @@ fun VerifyOtpUi(
             Text(
                 text = "Verification",
                 modifier = Modifier.fillMaxWidth(),
-                fontSize = 24.sp,
+                fontSize = 24.sp.nonScaledSp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 color = Color(0xFF333333)
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            SpacerHeight(40)
             Text(
                 text = "Please Enter 6 Digit Otp",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 15.dp),
-                fontSize = 16.sp,
+                    .padding(horizontal = 16.dp),
+                fontSize = 16.sp.nonScaledSp,
                 color = Color(0xFF666666)
             )
-            Spacer(modifier = Modifier.height(20.dp))
             val (editValue, setEditValue) = remember { mutableStateOf("") }
             val otpLength = remember { 6 }
             val focusRequester = remember { FocusRequester() }
@@ -126,17 +131,17 @@ fun VerifyOtpUi(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                    .padding(horizontal = 0.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 (0 until otpLength).map { index ->
                     viewModel.filledOtp.value = editValue
                     OtpCell(
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .size(52.dp)
+                            .clip(RoundedCornerShape(1.dp))
                             .background(color = MaterialTheme.colorScheme.surface)
-                            .border(1.dp, Color.DarkGray, shape = RoundedCornerShape(8.dp))
+                            .border(1.dp, Color.DarkGray, shape = RoundedCornerShape(1.dp))
                             .onFocusChanged {
                                 focusRequester.requestFocus()
                             }
@@ -146,7 +151,6 @@ fun VerifyOtpUi(
                         value = editValue.getOrNull(index)?.toString() ?: "",
                         isCursorVisible = editValue.length == index
                     )
-                    Spacer(modifier = Modifier.size(12.dp))
                 }
             }
 
@@ -168,6 +172,21 @@ fun VerifyOtpUi(
             onAuthenticated()
             viewModel.showLoading.value = false
         }
+        IconButton(
+            onClick = {
+                onBack()
+            }, modifier = Modifier
+                .padding(16.dp)
+                .background(Color(0xFFFFA500).copy(0.5F), shape = CircleShape)
+                .align(Alignment.TopStart)
+        ) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowLeft,
+                contentDescription = null,
+                modifier = Modifier.size(50.dp)
+            )
+        }
+
     }
 }
 

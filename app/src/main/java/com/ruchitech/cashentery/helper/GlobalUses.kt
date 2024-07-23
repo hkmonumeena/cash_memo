@@ -1,6 +1,5 @@
 package com.ruchitech.cashentery.helper
 
-import androidx.navigation.NavHostController
 import com.ruchitech.cashentery.helper.navigation.Screen
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import java.text.SimpleDateFormat
@@ -17,7 +16,8 @@ const val cash = "CASH"
 const val pending = "PENDING"
 const val PAID = "PAID"
 const val overdue = "OVERDUE"
-
+const val termsAndCond = "https://btgondia.com/tnc"
+const val privacyPolicy = "https://btgondia.com/Privacy_Policy"
 
 /**
  * Formats the given milliseconds since epoch into a human-readable date and time string.
@@ -137,10 +137,42 @@ fun getInitialTransaction(): Transaction {
         type = Transaction.Type.DEBIT,
         account = Transaction.Account.ONLINE,
         transactionNumber = transactionNumber,
-        timeInMillis = getCurrentMillis(),
+        timeInMiles = getCurrentMillis(),
         status = Transaction.Status.CLEARED
     )
 }
+
+/**
+ * Calculates the sum of transaction amounts based on specified type and status.
+ *
+ * This function filters a list of transactions by the given transaction type and status,
+ * and then sums the amounts of the filtered transactions. If any transaction amount is null,
+ * it is treated as zero in the summation.
+ *
+ * @param transactions The list of transactions to be filtered and summed.
+ * @param type The type of transactions to be included in the sum. This is an enum of [Transaction.Type].
+ * @param status The status of transactions to be included in the sum. This is an enum of [Transaction.Status].
+ *
+ * @return The total sum of amounts for transactions that match the specified type and status.
+ *         If no transactions match, the function returns 0.0.
+ *
+ * @sample
+ * val creditPendingSum = calculateSum(transactions, Transaction.Type.CREDIT, Transaction.Status.PENDING)
+ * val debitClearedSum = calculateSum(transactions, Transaction.Type.DEBIT, Transaction.Status.CLEARED)
+ *
+ * @see Transaction
+ */
+fun calculateSum(
+    transactions: List<Transaction>,
+    type: Transaction.Type,
+    status: Transaction.Status
+): Double {
+    return transactions
+        .filter { it.type == type && it.status == status }
+        .sumOf { it.amount ?: 0.0 }
+}
+
+
 
 /**
  * Determines whether the "Add Transaction" button should be hidden based on the current screen.

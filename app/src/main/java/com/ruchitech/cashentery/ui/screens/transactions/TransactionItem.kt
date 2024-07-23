@@ -1,6 +1,8 @@
 package com.ruchitech.cashentery.ui.screens.transactions
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,12 +33,18 @@ import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfMediumFont
 import com.ruchitech.cashentery.ui.theme.sfSemibold
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TransactionItem(item: Transaction) {
+fun TransactionItem(item: Transaction,onClick: () -> Unit, onLongClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(MainBackgroundSurface)
+            .combinedClickable(onLongClick = {
+                onLongClick()
+            }, onClick = {
+                onClick()
+            })
     ) {
         Row(
             modifier = Modifier

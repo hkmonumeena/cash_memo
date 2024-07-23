@@ -52,7 +52,7 @@ class TransactionDetailsViewModel @Inject constructor(
     fun getTransactionDetails(transactionId: String): List<Transaction> {
         val listType = object : TypeToken<List<Transaction>>() {}.type
         val transactions: List<Transaction> = Gson().fromJson(transactionId, listType)
-        _transactionsFlow.value = transactions.sortedBy { it.timeInMillis }
+        _transactionsFlow.value = transactions.sortedBy { it.timeInMiles }
         return transactions
     }
 
@@ -67,7 +67,7 @@ class TransactionDetailsViewModel @Inject constructor(
         appPreference.categoriesList = categories.value
         val currentTransactions = _transactionsFlow.value.toMutableList()
         currentTransactions.add(newTransaction)
-        val sortedTransactions = currentTransactions.sortedBy { it.timeInMillis }
+        val sortedTransactions = currentTransactions.sortedBy { it.timeInMiles }
         _transactionsFlow.value = sortedTransactions
     }
 
@@ -92,7 +92,7 @@ class TransactionDetailsViewModel @Inject constructor(
             "date" to transaction.date,
             "remarks" to transaction.remarks,
             "tag" to transaction.tag,
-            "timeInMiles" to transaction.timeInMillis,
+            "timeInMiles" to transaction.timeInMiles,
             "transactionNumber" to transaction.transactionNumber,
             "type" to transaction.type,
             "status" to transaction.status
@@ -111,7 +111,7 @@ class TransactionDetailsViewModel @Inject constructor(
                 .set(transactionData, SetOptions.merge())
                 .addOnSuccessListener {
                     CoroutineScope(Dispatchers.IO).launch {
-                        delay(2000)
+                        delay(3000)
                         showLoading.value = false
                         _result.value = Result.Success
                     }
@@ -171,17 +171,13 @@ class TransactionDetailsViewModel @Inject constructor(
     }
 
     override fun handleInternalEvent(event: Event) {
-
-        Log.e("mlgfjhkmf", "handleInternalEvent: 163")
         when (event) {
             is Event.HomeViewModel -> Unit
             is Event.TransactionDetailsViewModel -> {
                 val currentTime = System.currentTimeMillis()
                 val timeDifference = currentTime - lastEventTime
-                Log.e("mlgfjhkmf", "handleInternalEvent: $lastEventTime")
                 if (timeDifference >= debounceInterval) {
                     if (event.transaction != null) {
-                        Log.e("mlgfjhkmf", "handleInternalEvent: 168")
                         val findOut = transactionsFlow.value.find {
                             it.tag?.toLowerCase(Locale.current) == event.transaction.tag?.toLowerCase(
                                 Locale.current
