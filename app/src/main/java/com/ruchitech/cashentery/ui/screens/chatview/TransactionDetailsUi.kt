@@ -27,6 +27,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -71,6 +73,7 @@ import com.ruchitech.cashentery.ui.screens.common_ui.DeleteConfirmationDialog
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.screens.common_ui.LoadingScreen
 import com.ruchitech.cashentery.ui.screens.common_ui.PaymentTypeSwitch
+import com.ruchitech.cashentery.ui.screens.common_ui.ReceiptUI
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerHeight
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerWidth
 import com.ruchitech.cashentery.ui.screens.common_ui.TransactionAccountSwitch
@@ -90,6 +93,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionDetailsUi(
     viewModel: TransactionDetailsViewModel,
@@ -120,7 +124,7 @@ fun TransactionDetailsUi(
             }
         }
     }
-
+    var printAndShare by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = result) {
         when (result) {
@@ -138,7 +142,7 @@ fun TransactionDetailsUi(
 
             }
 
-            null -> {}
+            else -> {}
         }
     }
 
@@ -298,6 +302,8 @@ fun TransactionDetailsUi(
                 ) {
                     EditTransactionScreen(viewModel = viewModel, dataToEdit, onBack = {
                         showDialog = false
+                    }, onShare = {
+                        printAndShare = true
                     })
                 }
             }
@@ -311,6 +317,26 @@ fun TransactionDetailsUi(
                 showDeleteDialog = false
             }
         }
+
+        if (printAndShare) {
+            BasicAlertDialog(onDismissRequest = {
+            }, modifier = Modifier.fillMaxSize(), properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(MainBackgroundSurface)){
+                    dataToEdit?.let {
+                        ReceiptUI(transaction = it, onDismiss = {
+                            printAndShare = false
+                        }, onShareClick = { s, uri ->
+                        }
+                        )
+                    }
+
+                }
+
+            }
+        }
+
 
     }
 }
@@ -472,6 +498,7 @@ private fun EditTransactionScreen(
     viewModel: TransactionDetailsViewModel,
     dataToEdit: Transaction?,
     onBack: () -> Unit,
+    onShare:()->Unit
 ) {
     val tags by viewModel.categories.collectAsState()
     var addNewTransaction by remember {
@@ -533,6 +560,14 @@ private fun EditTransactionScreen(
                     modifier = Modifier.padding(bottom = 0.dp),
                     fontFamily = montserrat_medium
                 )
+
+                Row {
+                    IconButton(onClick = {
+                        onShare()
+                    }) {
+                        Icon(imageVector = Icons.Default.Share, contentDescription = null)
+                    }
+                }
                 Icon(imageVector = Icons.Default.Delete,
                     contentDescription = null,
                     tint = Color(0xFFD50D50),
@@ -541,6 +576,7 @@ private fun EditTransactionScreen(
                         .clickable {
                             showDeleteDialog = true
                         })
+
             }
 
 

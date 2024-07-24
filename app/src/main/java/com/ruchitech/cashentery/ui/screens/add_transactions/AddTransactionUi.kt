@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,11 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.getInitialTransaction
 import com.ruchitech.cashentery.ui.screens.common_ui.LoadingScreen
 import com.ruchitech.cashentery.ui.screens.common_ui.PaymentTypeSwitch
+import com.ruchitech.cashentery.ui.screens.common_ui.ReceiptUI
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerHeight
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerWidth
 import com.ruchitech.cashentery.ui.screens.common_ui.TransactionAccountSwitch
@@ -74,6 +78,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
         mutableStateOf(getInitialTransaction().copy(tag = (context as MainActivity).lastTagUsed))
     }
     val tags by viewModel.categories.collectAsState()
+    var printAndShare by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -85,13 +90,27 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 .padding(16.dp)
         ) {
 
-            Text(
-                "Add Transaction",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(bottom = 16.dp),
-                fontFamily = montserrat_medium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Add Transaction",
+                    fontSize = 24.sp,
+                    modifier = Modifier.padding(bottom = 0.dp),
+                    fontFamily = montserrat_medium
+                )
 
+                IconButton(onClick = {
+                    printAndShare = true
+                }) {
+                    Icon(imageVector = Icons.Default.Share, contentDescription = null)
+                }
+
+            }
+
+            SpacerHeight(16)
             Row(modifier = Modifier.height(50.dp)) {
                 AmountField(
                     modifier = Modifier.weight(1F),
@@ -186,6 +205,24 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                         )
                     }
                 }
+            }
+        }
+        if (printAndShare) {
+            BasicAlertDialog(onDismissRequest = {
+            }, modifier = Modifier.fillMaxSize(), properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(MainBackgroundSurface)){
+                    newTransaction?.let {
+                        ReceiptUI(transaction = it, onDismiss = {
+                            printAndShare = false
+                        }, onShareClick = { s, uri ->
+                        }
+                        )
+                    }
+
+                }
+
             }
         }
     }
