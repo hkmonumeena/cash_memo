@@ -47,6 +47,7 @@ import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.getCurrentDateWithTime
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import dev.shreyaspatil.capturable.capturable
 import dev.shreyaspatil.capturable.controller.rememberCaptureController
 import kotlinx.coroutines.launch
@@ -75,7 +76,7 @@ fun ReceiptUI(
                 .padding(horizontal = 16.dp)
                 .capturable(captureController)
                 .background(Color(0x33CBCBCB))
-                .padding(horizontal = 44.dp, vertical = 10.dp)
+                .padding(horizontal = 10.dp, vertical = 10.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -94,6 +95,7 @@ fun ReceiptUI(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
+                SpacerHeight(8)
 
                 Text(
                     text = "Name: John Doe",
@@ -101,7 +103,7 @@ fun ReceiptUI(
                     fontWeight = FontWeight.Normal,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.Black,
-                    textAlign = TextAlign.Start,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
                 SpacerHeight(4)
@@ -111,7 +113,7 @@ fun ReceiptUI(
                     fontWeight = FontWeight.Normal,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.Black,
-                    textAlign = TextAlign.Start,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
                 SpacerHeight(8)
@@ -144,7 +146,7 @@ fun ReceiptUI(
                     Text(
                         text = "Created at: ${getCurrentDateWithTime()}",
                         style = TextStyle(
-                            fontSize = 12.sp,
+                            fontSize = 12.sp.nonScaledSp,
                             fontFamily = FontFamily.SansSerif,
                             color = Color.Gray
                         ),
@@ -156,7 +158,7 @@ fun ReceiptUI(
                     Text(
                         text = "By:    Cash Entry",
                         style = TextStyle(
-                            fontSize = 12.sp,
+                            fontSize = 12.sp.nonScaledSp,
                             fontFamily = FontFamily.SansSerif,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black
@@ -268,18 +270,19 @@ fun ReceiptText(label: String, value: String) {
         BasicText(
             text = label,
             style = receiptTextStyle(),
-            modifier = Modifier.weight(0.8F)
+            modifier = Modifier.weight(1F)
         )
         BasicText(
             text = value,
             style = receiptTextStyle(),
-            modifier = Modifier.weight(2.1f)
+            modifier = Modifier.weight(2f)
         )
     }
 }
 
+@Composable
 fun receiptTextStyle() = TextStyle(
-    fontSize = 18.sp,
+    fontSize = 16.sp.nonScaledSp,
     fontFamily = FontFamily.Monospace,
     color = Color.Black
 )
