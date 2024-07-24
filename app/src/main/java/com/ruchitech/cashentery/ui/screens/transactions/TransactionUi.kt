@@ -205,13 +205,13 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
                             TransactionHeader(t, u[0].timeInMiles)
                         }
                         itemsIndexed(u) { _, item ->
-                            TransactionItem(item,onClick = {
+                            TransactionItem(item, onClick = {
                                 showDialog = true
                                 dataToEdit = item
                             }, onLongClick = {
                                 dataToEdit = item
-                              //  showDeleteDialog = true
-                               printAndShare = true
+                                //  showDeleteDialog = true
+                                printAndShare = true
                             })
                             Divider(thickness = 1.dp, color = Color(0xFFBBA76D))
                         }
@@ -243,10 +243,13 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
         }
     }
 
-    if (printAndShare){
+    if (printAndShare) {
         dataToEdit?.let {
-            ReceiptUI(transaction = it) { s, uri ->
+            ReceiptUI(transaction = it, onDismiss = {
+                printAndShare = false
+            }, onShareClick = { s, uri ->
             }
+            )
         }
     }
 
