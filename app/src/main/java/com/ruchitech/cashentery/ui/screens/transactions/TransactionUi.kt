@@ -210,8 +210,8 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
                                 dataToEdit = item
                             }, onLongClick = {
                                 dataToEdit = item
-                                showDeleteDialog = true
-                              //  printAndShare = true
+                              //  showDeleteDialog = true
+                               printAndShare = true
                             })
                             Divider(thickness = 1.dp, color = Color(0xFFBBA76D))
                         }

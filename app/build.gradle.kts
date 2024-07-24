@@ -94,6 +94,9 @@ dependencies {
     implementation ("io.coil-kt:coil-compose:2.0.0")
     implementation("com.google.accompanist:accompanist-drawablepainter:0.35.0-alpha")
     implementation (libs.accompanist.swiperefresh)
+
+        implementation ("dev.shreyaspatil:capturable:2.1.0")
+
 }
 // Add this to enable annotation processing with Hilt
 kapt {
