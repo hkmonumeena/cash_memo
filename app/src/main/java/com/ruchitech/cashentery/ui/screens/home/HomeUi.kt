@@ -42,13 +42,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ruchitech.cashentery.MainActivity
+import com.ruchitech.cashentery.helper.calculateNetBalance
 import com.ruchitech.cashentery.helper.calculateSum
+import com.ruchitech.cashentery.helper.formatNetBalanceMessage
+import com.ruchitech.cashentery.helper.formatNetBalanceMessageShort
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.screens.common_ui.SignOutConfirmationDialog
@@ -197,14 +201,46 @@ fun HomeUi(
                         }
                     }
                     TransactionStatusTable(
-                        creditPending = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.PENDING),
-                        creditCleared = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.CLEARED),
-                        creditOverdue = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.OVERDUE),
-                        creditVoid = calculateSum(singleTrnx, Transaction.Type.CREDIT, Transaction.Status.VOID),
-                        debtPending = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.PENDING),
-                        debtCleared = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.CLEARED),
-                        debtOverdue = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.OVERDUE),
-                        debtVoid = calculateSum(singleTrnx, Transaction.Type.DEBIT, Transaction.Status.VOID)
+                        creditPending = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.CREDIT,
+                            Transaction.Status.PENDING
+                        ),
+                        creditCleared = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.CREDIT,
+                            Transaction.Status.CLEARED
+                        ),
+                        creditOverdue = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.CREDIT,
+                            Transaction.Status.OVERDUE
+                        ),
+                        creditVoid = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.CREDIT,
+                            Transaction.Status.VOID
+                        ),
+                        debtPending = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.DEBIT,
+                            Transaction.Status.PENDING
+                        ),
+                        debtCleared = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.DEBIT,
+                            Transaction.Status.CLEARED
+                        ),
+                        debtOverdue = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.DEBIT,
+                            Transaction.Status.OVERDUE
+                        ),
+                        debtVoid = calculateSum(
+                            singleTrnx,
+                            Transaction.Type.DEBIT,
+                            Transaction.Status.VOID
+                        )
                     )
                     Row(
                         modifier = Modifier
@@ -323,15 +359,23 @@ private fun TransactionItem(
         }
 
         Column(horizontalAlignment = Alignment.End) {
+            val netBalance = calculateNetBalance(u)
             Text(
-                text = formatToINR(u.sumOf { it.amount ?: 0.0 }),
+                text = formatToINR(netBalance),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp.nonScaledSp,
                 modifier = Modifier.padding(end = 10.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
+  /*          Text(
+                text = formatNetBalanceMessage(netBalance),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                textAlign = TextAlign.Center
+            )*/
             Text(
-                text = "last was ${formatToINR(transaction.amount ?: 0.0)}",
+                text = formatNetBalanceMessageShort(netBalance),
                 fontSize = 12.sp.nonScaledSp,
                 fontFamily = FontFamily.SansSerif,
                 color = if (transaction.type == Transaction.Type.CREDIT) Income else Expense,

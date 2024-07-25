@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.chatview
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,12 +58,15 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.Result
+import com.ruchitech.cashentery.helper.calculateNetBalance
+import com.ruchitech.cashentery.helper.formatNetBalanceMessage
 import com.ruchitech.cashentery.ui.screens.add_transactions.AmountField
 import com.ruchitech.cashentery.ui.screens.add_transactions.DateField
 import com.ruchitech.cashentery.ui.screens.add_transactions.RemarksField
@@ -78,7 +82,6 @@ import com.ruchitech.cashentery.ui.screens.common_ui.SpacerHeight
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerWidth
 import com.ruchitech.cashentery.ui.screens.common_ui.TransactionAccountSwitch
 import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusSwitch
-import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusTable
 import com.ruchitech.cashentery.ui.screens.home.formatMillisToDate
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import com.ruchitech.cashentery.ui.theme.Expense
@@ -127,6 +130,10 @@ fun TransactionDetailsUi(
     var printAndShare by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = result) {
+        val netBalance = calculateNetBalance(data)
+
+        Log.e("kljkhghfg", "TransactionDetailsUi: ${formatNetBalanceMessage(netBalance)}")
+
         when (result) {
             Result.Error -> {}
             Result.Success -> {
@@ -182,7 +189,7 @@ fun TransactionDetailsUi(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
-                    .padding(bottom = 146.dp),
+                    .padding(bottom = 200.dp),
                 verticalAlignment = Alignment.Top
             ) { page ->
                 if (filteredTransactions.isEmpty()) {
@@ -248,8 +255,10 @@ fun TransactionDetailsUi(
                     }
                 }
             }
+            val netBalance = calculateNetBalance(data)
+            Text(text = formatNetBalanceMessage(netBalance), modifier = Modifier.fillMaxWidth().padding(top = 10.dp), textAlign = TextAlign.Center)
 
-           // TransactionStatusTable()
+            // TransactionStatusTable()
 
             Row(
                 modifier = Modifier
@@ -319,11 +328,17 @@ fun TransactionDetailsUi(
         }
 
         if (printAndShare) {
-            BasicAlertDialog(onDismissRequest = {
-            }, modifier = Modifier.fillMaxSize(), properties = DialogProperties(usePlatformDefaultWidth = false)) {
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .background(MainBackgroundSurface)){
+            BasicAlertDialog(
+                onDismissRequest = {
+                },
+                modifier = Modifier.fillMaxSize(),
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MainBackgroundSurface)
+                ) {
                     dataToEdit?.let {
                         ReceiptUI(transaction = it, onDismiss = {
                             printAndShare = false
@@ -498,7 +513,7 @@ private fun EditTransactionScreen(
     viewModel: TransactionDetailsViewModel,
     dataToEdit: Transaction?,
     onBack: () -> Unit,
-    onShare:()->Unit
+    onShare: () -> Unit,
 ) {
     val tags by viewModel.categories.collectAsState()
     var addNewTransaction by remember {

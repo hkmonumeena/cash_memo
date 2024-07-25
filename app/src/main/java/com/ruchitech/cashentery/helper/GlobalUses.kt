@@ -202,3 +202,85 @@ fun hideTransactionButton(destinationId: String?): Boolean {
     return destinationId?.split("/")?.firstOrNull()?.let { it in hiddenScreens } ?: false
 }
 
+
+fun numberToWords(number: Long): String {
+    if (number == 0L) return "Zero"
+
+    val ones = arrayOf(
+        "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+        "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+        "Seventeen", "Eighteen", "Nineteen"
+    )
+    val tens = arrayOf(
+        "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+    )
+    val thousands = arrayOf("", "Thousand", "Million", "Billion")
+
+    fun convertLessThanThousand(n: Int): String {
+        val hundred = n / 100
+        val rest = n % 100
+        var result = ""
+        if (hundred > 0) {
+            result += ones[hundred] + " Hundred"
+            if (rest > 0) result += " "
+        }
+        if (rest < 20) {
+            result += ones[rest]
+        } else {
+            val ten = rest / 10
+            val unit = rest % 10
+            result += tens[ten]
+            if (unit > 0) result += "-" + ones[unit]
+        }
+        return result.trim()
+    }
+
+    var num = number
+    var place = 0
+    var result = ""
+    while (num > 0) {
+        val n = (num % 1000).toInt()
+        if (n != 0) {
+            val s = convertLessThanThousand(n)
+            result = s + if (place > 0) " ${thousands[place]} " else " " + result
+        }
+        place++
+        num /= 1000
+    }
+
+    return result.trim() + " Rupees Only"
+}
+
+fun calculateNetBalance(transactions: List<Transaction>): Double {
+    // Calculate net balance
+    val netBalance = transactions
+        .filter { it.status != Transaction.Status.VOID } // Exclude VOID transactions
+        .sumOf { transaction ->
+            when (transaction.type) {
+                Transaction.Type.CREDIT -> -(transaction.amount ?: 0.0) // Subtract CREDIT (received)
+                Transaction.Type.DEBIT -> transaction.amount ?: 0.0      // Add DEBIT (paid out)
+                else -> 0.0
+            }
+        }
+
+    return netBalance
+}
+
+fun formatNetBalanceMessage(netBalance: Double): String {
+    return when {
+        netBalance > 0 -> "You will receive Rs. ${String.format("%.2f", netBalance)}."
+        netBalance < 0 -> "You need to pay Rs. ${String.format("%.2f", -netBalance)}."
+        else -> "Your account is settled. No payment needed."
+    }
+}
+
+fun formatNetBalanceMessageShort(netBalance: Double): String {
+    return when {
+        netBalance > 0 -> "You'll get "
+        netBalance < 0 -> "You'll pay"
+        else -> "No balance due."
+    }
+}
+
+
+

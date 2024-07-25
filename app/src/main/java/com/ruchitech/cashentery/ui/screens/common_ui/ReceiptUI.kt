@@ -51,6 +51,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.getCurrentDateWithTime
+import com.ruchitech.cashentery.helper.numberToWords
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
@@ -179,6 +180,16 @@ fun ReceiptUI(
                 }
                 DividerLine()
                 TotalAmountRow(totalAmount = formatToINR(transaction.amount ?: 0.0))
+                Text(
+                    text = "${numberToWords(transaction.amount?.toLong() ?: 0L)}",
+                    fontSize = 14.sp.nonScaledSp,
+                    fontWeight = FontWeight.Normal,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
+                )
+                SpacerHeight(8)
                 DividerLine()
                 // Footer
                 if (settings.showCreatedDate) {
