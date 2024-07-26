@@ -125,8 +125,8 @@ fun ReceiptUI(
 
                 if (settings.showName) {
                     Text(
-                        text = "Name: John Doe",
-                        fontSize = 18.sp,
+                        text = "Monu Meena",
+                        fontSize = 18.sp.nonScaledSp,
                         fontWeight = FontWeight.Normal,
                         fontFamily = FontFamily.SansSerif,
                         color = Color.Black,
@@ -137,15 +137,24 @@ fun ReceiptUI(
                 if (settings.showMobile) {
                     SpacerHeight(4)
                     Text(
-                        text = "Mobile: +1 234 567 890",
-                        fontSize = 18.sp,
+                        text = "Mobile: +919131414139",
+                        fontSize = 14.sp.nonScaledSp,
                         fontWeight = FontWeight.Normal,
-                        fontFamily = FontFamily.SansSerif,
+                        fontFamily = FontFamily.Monospace,
                         color = Color.Black,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+                Text(
+                    text = "Email: Monum811@gmail.com",
+                    fontSize = 14.sp.nonScaledSp,
+                    fontWeight = FontWeight.Normal,
+                    fontFamily = FontFamily.Monospace,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 SpacerHeight(8)
                 DividerLineStars()
                 // Receipt Details
@@ -167,7 +176,7 @@ fun ReceiptUI(
                     SpacerHeight(10)
                 }
                 if (settings.showAccount) {
-                    ReceiptText(label = "Account:", value = transaction.account?.name ?: "N/A")
+                    ReceiptText(label = "Mode:", value = transaction.account?.name ?: "N/A")
                     SpacerHeight(10)
                 }
                 if (settings.showStatus) {
@@ -222,20 +231,20 @@ fun ReceiptUI(
                             modifier = Modifier
                         )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    DividerLineStars()
-                    SpacerHeight(10)
-                    Text(
-                        text = "Thank you!",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.SansSerif,
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+                DividerLineStars()
+                SpacerHeight(10)
+                Text(
+                    text = "Thank you!",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 

@@ -204,7 +204,7 @@ fun hideTransactionButton(destinationId: String?): Boolean {
 
 
 fun numberToWords(number: Long): String {
-    if (number == 0L) return "Zero"
+    if (number == 0L) return "Zero Rupees Only"
 
     val ones = arrayOf(
         "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
@@ -219,37 +219,46 @@ fun numberToWords(number: Long): String {
     fun convertLessThanThousand(n: Int): String {
         val hundred = n / 100
         val rest = n % 100
-        var result = ""
+        val builder = StringBuilder()
+
         if (hundred > 0) {
-            result += ones[hundred] + " Hundred"
-            if (rest > 0) result += " "
+            builder.append(ones[hundred]).append(" Hundred")
+            if (rest > 0) builder.append(" ")
         }
         if (rest < 20) {
-            result += ones[rest]
+            builder.append(ones[rest])
         } else {
             val ten = rest / 10
             val unit = rest % 10
-            result += tens[ten]
-            if (unit > 0) result += "-" + ones[unit]
+            builder.append(tens[ten])
+            if (unit > 0) builder.append(" ").append(ones[unit])
         }
-        return result.trim()
+        return builder.toString().trim()
     }
 
     var num = number
     var place = 0
-    var result = ""
+    val builder = StringBuilder()
+
     while (num > 0) {
         val n = (num % 1000).toInt()
         if (n != 0) {
             val s = convertLessThanThousand(n)
-            result = s + if (place > 0) " ${thousands[place]} " else " " + result
+            if (builder.isNotEmpty()) {
+                builder.insert(0, " ")
+            }
+            if (place > 0) {
+                builder.insert(0, " ${thousands[place]} ")
+            }
+            builder.insert(0, s)
         }
         place++
         num /= 1000
     }
 
-    return result.trim() + " Rupees Only"
+    return builder.toString().trim() + " Rupees Only"
 }
+
 
 fun calculateNetBalance(transactions: List<Transaction>): Double {
     // Calculate net balance
