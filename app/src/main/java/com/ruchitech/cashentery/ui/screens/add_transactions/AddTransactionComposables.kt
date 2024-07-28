@@ -338,7 +338,7 @@ fun RemarksField(initialValue: String?, onValueChange: (value: String?) -> Unit)
 }
 
 @Composable
-fun SubmitButton(transactionType: Transaction.Type?, onClick: () -> Unit) {
+fun SaveButton(transactionType: Transaction.Type?, onClick: () -> Unit) {
     Button(
         onClick = {
             onClick()
@@ -353,6 +353,28 @@ fun SubmitButton(transactionType: Transaction.Type?, onClick: () -> Unit) {
     ) {
         Text(
             "SUBMIT",
+            modifier = Modifier.padding(horizontal = 16.dp),
+            fontSize = 16.sp.nonScaledSp
+        )
+    }
+}
+
+@Composable
+fun SaveAndShareButton(transactionType: Transaction.Type?, onClick: () -> Unit) {
+    Button(
+        onClick = {
+            onClick()
+        }, modifier = Modifier
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+        shape = RoundedCornerShape(5.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (transactionType == Transaction.Type.CREDIT) Color(
+                0xFF4CAF50
+            ).copy(alpha = 0.8F) else Color(0xFFF44336).copy(alpha = 0.8F)
+        )
+    ) {
+        Text(
+            "SAVE AND SHARE",
             modifier = Modifier.padding(horizontal = 16.dp),
             fontSize = 16.sp.nonScaledSp
         )

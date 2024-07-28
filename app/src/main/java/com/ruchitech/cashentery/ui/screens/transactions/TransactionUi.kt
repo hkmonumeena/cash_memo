@@ -56,7 +56,7 @@ import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.ui.screens.add_transactions.AmountField
 import com.ruchitech.cashentery.ui.screens.add_transactions.DateField
 import com.ruchitech.cashentery.ui.screens.add_transactions.RemarksField
-import com.ruchitech.cashentery.ui.screens.add_transactions.SubmitButton
+import com.ruchitech.cashentery.ui.screens.add_transactions.SaveButton
 import com.ruchitech.cashentery.ui.screens.add_transactions.TagTextField
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.DeleteConfirmationDialog
@@ -444,7 +444,7 @@ private fun EditTransactionScreen(
                     }
                     SpacerHeight(20)
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        SubmitButton(newTransaction?.type) {
+                        SaveButton(newTransaction?.type) {
                             if (newTransaction?.amount?.isNaN() == false && !newTransaction?.tag.isNullOrEmpty()) {
                                 viewModel.updateTransaction(newTransaction!!)
                             }

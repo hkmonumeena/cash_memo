@@ -190,7 +190,7 @@ fun ReceiptUI(
                 DividerLine()
                 TotalAmountRow(totalAmount = formatToINR(transaction.amount ?: 0.0))
                 Text(
-                    text = "${numberToWords(transaction.amount?.toLong() ?: 0L)}",
+                    text = numberToWords(transaction.amount?.toLong() ?: 0L),
                     fontSize = 14.sp.nonScaledSp,
                     fontWeight = FontWeight.Normal,
                     fontFamily = FontFamily.SansSerif,

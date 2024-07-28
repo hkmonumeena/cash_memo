@@ -1,12 +1,16 @@
 package com.ruchitech.cashentery.helper
 
+import android.content.Context
+import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.navigation.Screen
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import kotlin.random.Random
 
 
 const val DEBIT = "DEBIT"
@@ -291,5 +295,21 @@ fun formatNetBalanceMessageShort(netBalance: Double): String {
     }
 }
 
+
+
+fun getRandomQuote(context: Context): String {
+    // Read the JSON file from the raw directory
+    val inputStream = context.resources.openRawResource(R.raw.quotes)
+    val jsonText = inputStream.bufferedReader().use { it.readText() }
+
+    // Parse the JSON array
+    val quotesArray = JSONArray(jsonText)
+
+    // Generate a random index
+    val randomIndex = Random.nextInt(quotesArray.length())
+
+    // Return a random quote
+    return quotesArray.getString(randomIndex)
+}
 
 

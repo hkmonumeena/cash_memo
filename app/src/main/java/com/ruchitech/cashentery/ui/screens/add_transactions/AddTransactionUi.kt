@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.add_transactions
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,8 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -28,12 +28,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
+import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.getInitialTransaction
+import com.ruchitech.cashentery.helper.getRandomQuote
 import com.ruchitech.cashentery.ui.screens.common_ui.LoadingScreen
 import com.ruchitech.cashentery.ui.screens.common_ui.PaymentTypeSwitch
 import com.ruchitech.cashentery.ui.screens.common_ui.ReceiptUI
@@ -79,6 +82,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
     }
     val tags by viewModel.categories.collectAsState()
     var printAndShare by remember { mutableStateOf(false) }
+    val randomQuote = getRandomQuote(context)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -102,11 +106,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                     fontFamily = montserrat_medium
                 )
 
-                IconButton(onClick = {
-                    printAndShare = true
-                }) {
-                    Icon(imageVector = Icons.Default.Share, contentDescription = null)
-                }
+                Image(painterResource(id = R.drawable.ic_receipt), contentDescription = null)
 
             }
 
@@ -186,9 +186,15 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
             SpacerHeight(20)
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    SubmitButton(newTransaction.type) {
+                    SaveButton(newTransaction.type) {
                         if (newTransaction.amount?.isNaN() == false && !newTransaction.tag.isNullOrEmpty()) {
                             viewModel.addTrans(newTransaction)
+                        }
+                    }
+                    SaveAndShareButton(newTransaction.type) {
+                        if (newTransaction.amount?.isNaN() == false && !newTransaction.tag.isNullOrEmpty()) {
+                            viewModel.addTrans(newTransaction)
+                            printAndShare = true
                         }
                     }
                     SpacerHeight(16)
@@ -200,20 +206,29 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                             .background(TempColor, shape = CircleShape)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = null
                         )
                     }
                 }
             }
+            SpacerHeight(24)
+            Text(text = randomQuote)
+
         }
         if (printAndShare) {
-            BasicAlertDialog(onDismissRequest = {
-            }, modifier = Modifier.fillMaxSize(), properties = DialogProperties(usePlatformDefaultWidth = false)) {
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .background(MainBackgroundSurface)){
-                    newTransaction?.let {
+            BasicAlertDialog(
+                onDismissRequest = {
+                },
+                modifier = Modifier.fillMaxSize(),
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MainBackgroundSurface)
+                ) {
+                    newTransaction.let {
                         ReceiptUI(transaction = it, onDismiss = {
                             printAndShare = false
                         }, onShareClick = { s, uri ->
