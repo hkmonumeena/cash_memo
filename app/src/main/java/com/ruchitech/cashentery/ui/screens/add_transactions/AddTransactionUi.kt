@@ -2,6 +2,7 @@ package com.ruchitech.cashentery.ui.screens.add_transactions
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -106,7 +108,9 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                     fontFamily = montserrat_medium
                 )
 
-                Image(painterResource(id = R.drawable.ic_receipt), contentDescription = null)
+                Image(painterResource(id = R.drawable.ic_receipt), contentDescription = null, modifier = Modifier.clickable {
+                    printAndShare = true
+                })
 
             }
 
@@ -191,13 +195,13 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                             viewModel.addTrans(newTransaction)
                         }
                     }
-                    SaveAndShareButton(newTransaction.type) {
+   /*                 SaveAndShareButton(newTransaction.type) {
                         if (newTransaction.amount?.isNaN() == false && !newTransaction.tag.isNullOrEmpty()) {
                             viewModel.addTrans(newTransaction)
                             printAndShare = true
                         }
                     }
-                    SpacerHeight(16)
+                    SpacerHeight(16)*/
                     IconButton(
                         onClick = {
                             onBack()
@@ -213,7 +217,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 }
             }
             SpacerHeight(24)
-            Text(text = randomQuote)
+            Text(text = randomQuote, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
 
         }
         if (printAndShare) {
@@ -228,13 +232,11 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                         .fillMaxSize()
                         .background(MainBackgroundSurface)
                 ) {
-                    newTransaction.let {
-                        ReceiptUI(transaction = it, onDismiss = {
-                            printAndShare = false
-                        }, onShareClick = { s, uri ->
-                        }
-                        )
+                    ReceiptUI(transaction = newTransaction, onDismiss = {
+                        printAndShare = false
+                    }, onShareClick = { s, uri ->
                     }
+                    )
 
                 }
 

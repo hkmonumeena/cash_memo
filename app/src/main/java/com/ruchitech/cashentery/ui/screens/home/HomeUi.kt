@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,9 +23,10 @@ import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Divider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -42,16 +44,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ruchitech.cashentery.MainActivity
+import com.ruchitech.cashentery.helper.RequestState
 import com.ruchitech.cashentery.helper.calculateNetBalance
 import com.ruchitech.cashentery.helper.calculateSum
-import com.ruchitech.cashentery.helper.formatNetBalanceMessage
 import com.ruchitech.cashentery.helper.formatNetBalanceMessageShort
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
@@ -94,6 +95,8 @@ fun HomeUi(
     navigateToDetails: (transaction: List<Transaction>) -> Unit,
     onSignOut: () -> Unit,
 ) {
+
+    val data by viewModel.data.collectAsState(initial = RequestState.Idle)
     val transactions by viewModel.groupByTag.collectAsState()
     val singleTrnx by viewModel.transactionsFlow.collectAsState()
     val sumOfIncome by viewModel.sumOfIncome.collectAsState()
@@ -107,6 +110,26 @@ fun HomeUi(
     val scope = rememberCoroutineScope()
     // SwipeRefreshState keeps track of the refresh state
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
+    data.DisplayResult(
+        onIdle = {
+            Log.e("gkfhdfg", "HomeUi: IDle")
+        },
+        onLoading = {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        },
+        onSuccess = { transaction2s ->
+            Log.e("gkfhdfg", "HomeUi: $transaction2s")
+            isRefreshing = false
+            viewModel.fetchTransactions(transaction2s)
+        },
+        onError = {
+            Log.e("gkfhdfg", "HomeUi: $it")
+        }
+    )
+
+
     Scaffold(
         topBar = {
             Row(
@@ -290,7 +313,7 @@ fun TransactionList(
             transactions.forEach { (t, u) ->
                 if (u.isNotEmpty()) {
                     item {
-                        Divider(color = Color((0xFFBBA76D)))
+                        HorizontalDivider(color = Color((0xFFBBA76D)))
                         TransactionItem(transaction = u.first(), u, onClick = {
                             onClick(u)
                         })
@@ -367,13 +390,13 @@ private fun TransactionItem(
                 modifier = Modifier.padding(end = 10.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
-  /*          Text(
-                text = formatNetBalanceMessage(netBalance),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                textAlign = TextAlign.Center
-            )*/
+            /*          Text(
+                          text = formatNetBalanceMessage(netBalance),
+                          modifier = Modifier
+                              .fillMaxWidth()
+                              .padding(top = 10.dp),
+                          textAlign = TextAlign.Center
+                      )*/
             Text(
                 text = formatNetBalanceMessageShort(netBalance),
                 fontSize = 12.sp.nonScaledSp,

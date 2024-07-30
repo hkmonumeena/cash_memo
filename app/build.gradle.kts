@@ -94,6 +94,8 @@ dependencies {
     implementation ("io.coil-kt:coil-compose:2.0.0")
     implementation("com.google.accompanist:accompanist-drawablepainter:0.35.0-alpha")
     implementation (libs.accompanist.swiperefresh)
+        implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2") // Update to the latest version
+
 
         implementation ("dev.shreyaspatil:capturable:2.1.0")
 

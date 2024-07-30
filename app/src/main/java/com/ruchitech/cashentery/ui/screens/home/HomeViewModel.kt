@@ -1,11 +1,11 @@
 package com.ruchitech.cashentery.ui.screens.home
 
-import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ruchitech.cashentery.helper.Event
 import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
+import com.ruchitech.cashentery.ui.screens.Repository
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +24,7 @@ fun formatMillisToDate(millis: Long): String {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val appPreference: AppPreference,
+    private val repository: Repository,
 ) : SharedViewModel() {
     private val _transactionsFlow = MutableStateFlow<List<Transaction>>(emptyList())
     val transactionsFlow: StateFlow<List<Transaction>> = _transactionsFlow
@@ -40,52 +41,49 @@ class HomeViewModel @Inject constructor(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     var transactions = ArrayList<Transaction>()
+    var data = repository.fetchAllTransactions()
 
     init {
         //appPreference.userId =  "monumeenatest" //"W5mzbR4YFSTClH6Tsf28LilEH9d2"
-        fetchTransactions()
+        // fetchTransactions()
     }
 
     fun updateData() {
-        fetchTransactions()
+        data = repository.fetchAllTransactions()
+        //   fetchTransactions()
     }
 
-    private fun fetchTransactions() {
+
+    private fun updateDataNew(newData: List<Transaction>) {
+
+    }
+
+
+    fun fetchTransactions(transaction2s: List<Transaction>) {
         val userId = appPreference.userId // "W5mzbR4YFSTClH6Tsf28LilEH9d2" //auth.currentUser?.uid
         if (userId == null) {
             println("User is not authenticated.")
             _transactionsFlow.value = emptyList()
             return
         }
+        transactions.clear()
+        transactions.addAll(transaction2s)
+        _sumOfExpense.value =
+            transactions.filter { it.type == Transaction.Type.DEBIT }
+                .sumOf { it.amount ?: 0.0 }
 
-        db.collection("users").document(userId).collection("transactions").get()
-            .addOnSuccessListener { result ->
-                transactions.clear()
-                val transactionList = result.toObjects(Transaction::class.java)
-                result.forEach { document ->
-                    val transaction =
-                        document.toObject(Transaction::class.java).copy(document.id)
-                    //transaction.id = document.id
-                    transactions.add(transaction)
-                    val documentId = document.id // <--- Get the document ID here
-                }
+        _sumOfIncome.value =
+            transactions.filter { it.type == Transaction.Type.CREDIT }
+                .sumOf { it.amount ?: 0.0 }
 
-                _sumOfExpense.value =
-                    transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
+        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
+        _groupByTag.value = transactions.groupBy {
+            it.tag
+        }.mapValues { entry ->
+            entry.value.sortedByDescending { it.timeInMiles }
+        }
+        appPreference.categoriesList = transactions.map { it.tag ?: "" }.distinct().toList()
 
-                _sumOfIncome.value =
-                    transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
-
-                _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
-                _groupByTag.value = transactions.groupBy {
-                    it.tag
-                }.mapValues { entry ->
-                    entry.value.sortedByDescending { it.timeInMiles }
-                }
-                appPreference.categoriesList = transactions.map { it.tag?:"" }.distinct().toList()
-            }.addOnFailureListener { exception ->
-                Log.e("MyViewModel", "Error getting transactions: ${exception.message}")
-            }
     }
 
     private fun updateTransaction(updatedTransaction: Transaction) {
@@ -128,10 +126,10 @@ class HomeViewModel @Inject constructor(
         _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
     }
 
-    fun signout(){
+    fun signout() {
         auth.signOut()
         appPreference.isUserLoggedIn = false
-        appPreference.userId =null
+        appPreference.userId = null
     }
 
 
@@ -146,7 +144,8 @@ class HomeViewModel @Inject constructor(
                     deleteTransaction(event.deleteId)
                 }
                 if (event.refreshPage) {
-                    fetchTransactions()
+                    //fetchTransactions()
+                    data = repository.fetchAllTransactions()
                 }
             }
 
