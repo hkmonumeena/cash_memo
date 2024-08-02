@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,14 +76,19 @@ import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfMediumFont
 import kotlinx.coroutines.launch
 
-fun filterTransactionsByStatus(
+fun filterTransactions(
     transactions: Map<String?, List<Transaction>>?,
-    status: Transaction.Status,
+    status: Transaction.Status? = null,
+    type: Transaction.Type? = null
 ): Map<String?, List<Transaction>>? {
     return transactions?.mapValues { entry ->
-        entry.value.filter { it.status == status }
+        entry.value.filter { transaction ->
+            (status == null || transaction.status == status) &&
+                    (type == null || transaction.type == type)
+        }
     }?.filterValues { it.isNotEmpty() }
 }
+
 
 @Composable
 fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
@@ -96,18 +102,36 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
     val selectedTabIndex = viewPagerState.currentPage
     val scope = rememberCoroutineScope()
     val result by viewModel.result.collectAsState()
+    var selectedType by rememberSaveable { mutableStateOf<Transaction.Type?>(null) }
     // Memoize filtered transactions
-    val filteredTransactions by remember(transactions, selectedTabIndex) {
+    val filteredTransactions by remember(transactions, selectedTabIndex, selectedType) {
         derivedStateOf {
             when (tabs[selectedTabIndex]) {
-                "Cleared" -> filterTransactionsByStatus(transactions, Transaction.Status.CLEARED)
-                "Pending" -> filterTransactionsByStatus(transactions, Transaction.Status.PENDING)
-                "Overdue" -> filterTransactionsByStatus(transactions, Transaction.Status.OVERDUE)
-                "Void" -> filterTransactionsByStatus(transactions, Transaction.Status.VOID)
-                else -> transactions // All transactions
+                "Cleared" -> filterTransactions(
+                    transactions,
+                    status = Transaction.Status.CLEARED,
+                    type = selectedType
+                )
+                "Pending" -> filterTransactions(
+                    transactions,
+                    status = Transaction.Status.PENDING,
+                    type = selectedType
+                )
+                "Overdue" -> filterTransactions(
+                    transactions,
+                    status = Transaction.Status.OVERDUE,
+                    type = selectedType
+                )
+                "Void" -> filterTransactions(
+                    transactions,
+                    status = Transaction.Status.VOID,
+                    type = selectedType
+                )
+                else -> filterTransactions(transactions, type = selectedType) // Show all if no specific status
             }
         }
     }
+
 
 
     LaunchedEffect(key1 = result) {
@@ -132,34 +156,13 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
             .fillMaxSize()
             .background(MainBackgroundSurface)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { onBack() }) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = null,
-                        Modifier.size(35.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "Transactions",
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = sfMediumFont,
-                    fontSize = 18.sp.nonScaledSp
-                )
-            }
-
-            Icon(imageVector = Icons.Filled.Share, contentDescription = null)
-        }
-
+        TransactionsAppBar(
+            onBack = onBack,
+            onTypeSelected = { type ->
+                selectedType = type
+            },
+            selectedType = selectedType
+        )
         TabRow(modifier = Modifier,
             selectedTabIndex = selectedTabIndex,
             containerColor = MainBackgroundSurface,

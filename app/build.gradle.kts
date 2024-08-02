@@ -31,6 +31,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -84,21 +85,21 @@ dependencies {
     //hilt nav
     implementation(libs.androidx.hilt.navigation.compose)
     //room db
-    implementation ("com.google.code.gson:gson:2.10.1")
+    implementation(libs.gson)
 
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
-    implementation ("androidx.navigation:navigation-compose:2.7.7")
-    implementation ("io.coil-kt:coil-compose:2.0.0")
-    implementation("com.google.accompanist:accompanist-drawablepainter:0.35.0-alpha")
-    implementation (libs.accompanist.swiperefresh)
-        implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2") // Update to the latest version
-
-
-        implementation ("dev.shreyaspatil:capturable:2.1.0")
-
+    implementation(libs.androidx.navigation.compose.v277)
+    implementation(libs.coil.compose)
+    implementation(libs.accompanist.drawablepainter)
+    implementation(libs.accompanist.swiperefresh)
+    implementation(libs.kotlinx.coroutines.play.services) // Update to the latest version
+    implementation(libs.integrity)
+    implementation(libs.capturable)
+    implementation (libs.play.services.ads)
+   // implementation ("com.google.android.play:core:1.10.3")
 }
 // Add this to enable annotation processing with Hilt
 kapt {

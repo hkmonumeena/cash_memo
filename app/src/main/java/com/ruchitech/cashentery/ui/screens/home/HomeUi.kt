@@ -19,10 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -37,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,7 +94,6 @@ fun HomeUi(
     navigateToDetails: (transaction: List<Transaction>) -> Unit,
     onSignOut: () -> Unit,
 ) {
-
     val data by viewModel.data.collectAsState(initial = RequestState.Idle)
     val transactions by viewModel.groupByTag.collectAsState()
     val singleTrnx by viewModel.transactionsFlow.collectAsState()
@@ -103,13 +101,14 @@ fun HomeUi(
     val sumOfExpense by viewModel.sumOfExpense.collectAsState()
     val context = LocalContext.current
     (context as MainActivity).lastTagUsed = ""
-    var showDeleteDialog by remember {
-        mutableStateOf(false)
-    }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
+    var selectedStatus by rememberSaveable { mutableStateOf<Transaction.Status?>(null) }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    // SwipeRefreshState keeps track of the refresh state
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
+
+    // Display results based on the state
     data.DisplayResult(
         onIdle = {
             Log.e("gkfhdfg", "HomeUi: IDle")
@@ -121,7 +120,7 @@ fun HomeUi(
         },
         onSuccess = { transaction2s ->
             Log.e("gkfhdfg", "HomeUi: $transaction2s")
-            isRefreshing = false
+        //    isRefreshing = false
             viewModel.fetchTransactions(transaction2s)
         },
         onError = {
@@ -129,28 +128,40 @@ fun HomeUi(
         }
     )
 
+// Filter transactions based on the selected status
+    // Use remember to cache the filtered transactions
+    val transactionFilters = remember(transactions, selectedStatus) {
+        transactions?.mapValues { (_, transactionList) ->
+            transactionList.filter { transaction ->
+                selectedStatus == null || transaction.status == selectedStatus
+            }
+        }?.filterValues { filteredList ->
+            filteredList.isNotEmpty()
+        }
+    }
+
 
     Scaffold(
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Monu Meena",
+                    text = "Cash Entry",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 16.sp.nonScaledSp
                 )
                 Row(horizontalArrangement = Arrangement.End) {
-                    IconButton(onClick = { viewModel.updateData() }) {
+              /*      IconButton(onClick = { viewModel.updateData() }) {
                         Icon(
                             imageVector = Icons.Outlined.Refresh,
                             contentDescription = "Refresh"
                         )
-                    }
+                    }*/
                     IconButton(onClick = {
                         showDeleteDialog = true
                     }) {
@@ -185,7 +196,7 @@ fun HomeUi(
                     isRefreshing = true
                     viewModel.updateData() // Trigger your data refresh logic here
                     scope.launch {
-                        delay(1500)
+                        delay(2500)
                         isRefreshing = false
                     }
                 }
@@ -195,7 +206,6 @@ fun HomeUi(
                         .fillMaxSize()
                         .background(MainBackgroundSurface)
                         .padding(padding)
-
                 ) {
                     Row(
                         modifier = Modifier
@@ -265,32 +275,15 @@ fun HomeUi(
                             Transaction.Status.VOID
                         )
                     )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 10.dp, horizontal = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Most used Tags(${transactions?.size})",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-
-                        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                            Icon(
-                                imageVector = Icons.Outlined.Search,
-                                contentDescription = "Search"
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Icon(
-                                imageVector = Icons.Outlined.DateRange,
-                                contentDescription = "Date Range"
-                            )
+                    FilterRow(
+                        transactionFilters = transactionFilters,
+                        selectedStatus = selectedStatus,
+                        onStatusSelected = { newStatus ->
+                            selectedStatus = newStatus
                         }
-                    }
-                    Spacer(modifier = Modifier.height(0.dp))
-                    TransactionList(transactions = transactions, onClick = {
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TransactionList(transactions = transactionFilters, onClick = {
                         navigateToDetails(it)
                     })
                 }
