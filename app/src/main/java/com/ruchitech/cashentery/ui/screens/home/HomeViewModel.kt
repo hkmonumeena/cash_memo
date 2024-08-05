@@ -1,6 +1,8 @@
 package com.ruchitech.cashentery.ui.screens.home
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ruchitech.cashentery.helper.Event
 import com.ruchitech.cashentery.helper.SharedViewModel
@@ -44,9 +46,51 @@ class HomeViewModel @Inject constructor(
     var data = repository.fetchAllTransactions()
 
     init {
-        //appPreference.userId =  "monumeenatest" //"W5mzbR4YFSTClH6Tsf28LilEH9d2"
-        // fetchTransactions()
+        fetchTags()
     }
+
+    // Define the page size
+    private val pageSize = 10
+
+    // Function to fetch tags with pagination
+    fun fetchTags(lastVisible: DocumentSnapshot? = null) {
+        val query = db.collection("users").document(appPreference.userId ?: "")
+            .collection("transactions")
+            .orderBy("timeInMiles") // Order by a unique field or timestamp
+            .limit(10L)
+
+        // If there is a last visible document, start after it
+        val paginatedQuery = lastVisible?.let {
+            query.startAfter(it)
+        } ?: query
+
+        paginatedQuery.get()
+            .addOnSuccessListener { querySnapshot ->
+                val uniqueTags = mutableSetOf<String>()
+                val tags = querySnapshot.documents.mapNotNull { document ->
+                    val tag = document.getString("tag")
+                    if (tag != null) {
+                        uniqueTags.add(tag)
+                    }
+                }
+
+                // Do something with the tags
+                println("Tags: $tags")
+                Log.e("fkmjihnbgytgf", "fetchTags: $uniqueTags")
+
+                // Get the last visible document for pagination
+                val lastDocument = querySnapshot.documents.lastOrNull()
+
+                // Optionally: fetch next page
+                if (lastDocument != null) {
+               //     fetchTags(lastDocument)
+                }
+            }
+            .addOnFailureListener { exception ->
+                println("Error fetching tags: $exception")
+            }
+    }
+
 
     fun updateData() {
         data = repository.fetchAllTransactions()
