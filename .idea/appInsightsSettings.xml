@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.ruchitech.cashentery" />
-                  <option name="mobileSdkAppId" value="1:389443520091:android:709bda98e683061dd6e17e" />
-                  <option name="projectId" value="cash-entery" />
-                  <option name="projectNumber" value="389443520091" />
+                  <option name="appId" value="PLACEHOLDER" />
+                  <option name="mobileSdkAppId" value="" />
+                  <option name="projectId" value="" />
+                  <option name="projectNumber" value="" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

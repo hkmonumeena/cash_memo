@@ -62,8 +62,8 @@ fun NavigationComponent(
             } else {
                 MobileAuthUi(
                     viewModel = viewModel,
-                    onCodeSent = { code ->
-                        navHostController.navigate(Screen.VerifyOtp(code))
+                    onCodeSent = { code ,mobileNumber->
+                        navHostController.navigate(Screen.VerifyOtp(code,mobileNumber))
                     }
                 )
             }
@@ -82,7 +82,8 @@ fun NavigationComponent(
                         popUpTo(Screen.MobileAuth) { inclusive = true }
                     }
                 },
-                verificationId = args.verificationId
+                verificationId = args.verificationId,
+                mobileNumber = args.mobileNumber
             )
         }
 

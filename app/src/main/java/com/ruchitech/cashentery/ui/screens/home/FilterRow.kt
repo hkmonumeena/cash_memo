@@ -28,6 +28,7 @@ import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerWidth
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
+
 @Composable
 fun FilterRow(
     transactionFilters: Map<String?, List<Transaction>>?,

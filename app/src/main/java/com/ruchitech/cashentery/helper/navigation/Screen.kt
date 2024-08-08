@@ -9,7 +9,7 @@ sealed class Screen {
     data object MobileAuth : Screen()
 
     @Serializable
-    data class VerifyOtp(val verificationId: String?) : Screen()
+    data class VerifyOtp(val verificationId: String?,val mobileNumber:String?) : Screen()
 
     @Serializable
     data object Home : Screen()

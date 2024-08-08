@@ -11,12 +11,16 @@ import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
+import com.ruchitech.cashentery.retrofit.remote.Status
+import com.ruchitech.cashentery.retrofit.repository.AccountRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.encodeToString
@@ -28,6 +32,7 @@ import javax.inject.Inject
 class AddTransactionViewModel @Inject constructor(
     private val myToast: MyToast,
     private val appPreference: AppPreference,
+    private val accountRepository: AccountRepository
 ) : SharedViewModel() {
     val showLoading = mutableStateOf(false)
     private val _result = MutableStateFlow<Result?>(null)
@@ -63,13 +68,50 @@ class AddTransactionViewModel @Inject constructor(
                 "timeInMiles" to transaction.timeInMiles,
                 "transactionNumber" to transaction.transactionNumber,
                 "type" to transaction.type,
-                "status" to transaction.status
+                "status" to transaction.status,
+                "authId" to appPreference.userId
             )
 
-            Log.e("lkfgjiihdgfdg", "$transaction")
 
-            showLoading.value = true
-            val database = FirebaseDatabase.getInstance()
+
+            viewModelScope.launch {
+                var newTrnx = transaction.copy(authId = appPreference.userId)
+                accountRepository.createTransaction(newTrnx).distinctUntilChanged()
+                    .collectLatest { resources ->
+                        when (resources.status) {
+                            Status.INITIAL -> Unit
+                            Status.EMPTY -> Unit
+                            Status.SUCCESS -> {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    EventEmitter postEvent Event.TransactionDetailsViewModel(
+                                        transaction = transaction
+                                    )
+                                    delay(1200)
+                                    EventEmitter postEvent Event.HomeViewModel(
+                                        refreshPage = true
+                                    )
+                                    delay(1400)
+                                    EventEmitter postEvent Event.TransactionsViewModel(refreshPage = true)
+                                    delay(2000)
+                                    showLoading.value = false
+                                    _result.value = Result.Success
+                                }
+                                println("Transaction successfully stored.")
+                            }
+
+                            Status.ERROR -> {
+                                showLoading.value = false
+                            }
+
+                            Status.LOADING -> {
+                                showLoading.value = true
+                            }
+                        }
+                    }
+            }
+
+            Log.e("lkfgjiihdgfdg", "$transaction")
+            /*val database = FirebaseDatabase.getInstance()
             val myRef = database.getReference("transactions").child(appPreference.userId ?: "")
             val transactionId = myRef.push().key // Generate a unique ID for the transaction
 
@@ -92,9 +134,6 @@ class AddTransactionViewModel @Inject constructor(
                             )
                             delay(1400)
                             EventEmitter postEvent Event.TransactionsViewModel(refreshPage = true)
-
-                        }
-                        CoroutineScope(Dispatchers.IO).launch {
                             delay(2000)
                             showLoading.value = false
                             _result.value = Result.Success
@@ -115,6 +154,7 @@ class AddTransactionViewModel @Inject constructor(
                 }
                 _result.value = Result.Success
             }
+        }*/
         }
     }
 

@@ -1,3 +1,7 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     alias(libs.plugins.android.application)
     id("kotlin-kapt")
@@ -21,6 +25,39 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    applicationVariants.all {
+        outputs.all {
+            val SEP = "_"
+            val flavor = flavorName
+            val buildType = buildType.name
+            val version = "${versionCode}(${versionName})"
+            val date = Date()
+            val formattedDate = SimpleDateFormat("ddMMyyyy_HHmmss", Locale.US).format(date)
+
+            val newApkName =
+                "Cash Entry${SEP}$flavor${SEP}$buildType${SEP}$version${SEP}$formattedDate.apk"
+            File(newApkName)
+        }
+    }
+
+    flavorDimensions("environment")
+
+    productFlavors {
+        create("Dev") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"http://16.171.27.231:3000\"")
+        }
+
+        create("Prod") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"http://16.171.27.231:3000\"")
+        }
+        create("Local") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"http://16.171.27.231:3000\"")
         }
     }
 
@@ -100,6 +137,13 @@ dependencies {
     implementation(libs.capturable)
     implementation (libs.play.services.ads)
    // implementation ("com.google.android.play:core:1.10.3")
+    //gson
+    implementation("com.google.code.gson:gson:2.10.1")
+    // retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    //OkHttp
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
 }
 // Add this to enable annotation processing with Hilt
 kapt {

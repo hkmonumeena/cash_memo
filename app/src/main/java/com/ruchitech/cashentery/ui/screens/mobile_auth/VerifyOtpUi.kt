@@ -59,11 +59,13 @@ fun VerifyOtpUi(
     viewModel: VerifyOtpViewModel,
     onAuthenticated: () -> Unit,
     verificationId: String?,
+    mobileNumber: String?,
     onBack: () -> Unit,
 ) {
 //    val state by viewModel.authState.collectAsState()
     LaunchedEffect(true) {
         viewModel.verificationId = verificationId
+        viewModel.mobileNumber.value = mobileNumber?:""
     }
 
     Box(

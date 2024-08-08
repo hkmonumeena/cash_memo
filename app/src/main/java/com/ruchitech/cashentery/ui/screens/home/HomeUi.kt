@@ -16,11 +16,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExitToApp
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -48,11 +48,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.google.android.play.integrity.internal.u
 import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.RequestState
 import com.ruchitech.cashentery.helper.calculateNetBalance
-import com.ruchitech.cashentery.helper.calculateSum
 import com.ruchitech.cashentery.helper.formatNetBalanceMessageShort
+import com.ruchitech.cashentery.retrofit.model.Tags
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.screens.common_ui.SignOutConfirmationDialog
@@ -96,9 +97,8 @@ fun HomeUi(
 ) {
     val data by viewModel.data.collectAsState(initial = RequestState.Idle)
     val transactions by viewModel.groupByTag.collectAsState()
-    val singleTrnx by viewModel.transactionsFlow.collectAsState()
-    val sumOfIncome by viewModel.sumOfIncome.collectAsState()
-    val sumOfExpense by viewModel.sumOfExpense.collectAsState()
+    val tags by viewModel.trxnTags.collectAsState()
+    val trxnSummary by viewModel.trnxSummary.collectAsState()
     val context = LocalContext.current
     (context as MainActivity).lastTagUsed = ""
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -120,7 +120,7 @@ fun HomeUi(
         },
         onSuccess = { transaction2s ->
             Log.e("gkfhdfg", "HomeUi: $transaction2s")
-        //    isRefreshing = false
+            //    isRefreshing = false
             viewModel.fetchTransactions(transaction2s)
         },
         onError = {
@@ -156,12 +156,12 @@ fun HomeUi(
                     fontSize = 16.sp.nonScaledSp
                 )
                 Row(horizontalArrangement = Arrangement.End) {
-              /*      IconButton(onClick = { viewModel.updateData() }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Refresh,
-                            contentDescription = "Refresh"
-                        )
-                    }*/
+                    /*      IconButton(onClick = { viewModel.updateData() }) {
+                              Icon(
+                                  imageVector = Icons.Outlined.Refresh,
+                                  contentDescription = "Refresh"
+                              )
+                          }*/
                     IconButton(onClick = {
                         showDeleteDialog = true
                     }) {
@@ -218,7 +218,7 @@ fun HomeUi(
                             Color(0xFFDBF5DB),
                             Color(0xFF228B22),
                             130f,
-                            sumOfIncome ?: 0.0
+                            trxnSummary?.totalCredits ?: 0.0
                         ) {
                             navigateToTransactions()
                         }
@@ -228,52 +228,20 @@ fun HomeUi(
                             Color(0xFFFEECEC),
                             Color(0xFFB22222),
                             320f,
-                            sumOfExpense ?: 0.0
+                            trxnSummary?.totalDebits ?: 0.0
                         ) {
                             navigateToTransactions()
                         }
                     }
                     TransactionStatusTable(
-                        creditPending = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.CREDIT,
-                            Transaction.Status.PENDING
-                        ),
-                        creditCleared = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.CREDIT,
-                            Transaction.Status.CLEARED
-                        ),
-                        creditOverdue = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.CREDIT,
-                            Transaction.Status.OVERDUE
-                        ),
-                        creditVoid = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.CREDIT,
-                            Transaction.Status.VOID
-                        ),
-                        debtPending = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.DEBIT,
-                            Transaction.Status.PENDING
-                        ),
-                        debtCleared = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.DEBIT,
-                            Transaction.Status.CLEARED
-                        ),
-                        debtOverdue = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.DEBIT,
-                            Transaction.Status.OVERDUE
-                        ),
-                        debtVoid = calculateSum(
-                            singleTrnx,
-                            Transaction.Type.DEBIT,
-                            Transaction.Status.VOID
-                        )
+                        creditPending = trxnSummary?.creditsByStatus?.PENDING ?: 0.0,
+                        creditCleared = trxnSummary?.creditsByStatus?.CLEARED ?: 0.0,
+                        creditOverdue = trxnSummary?.creditsByStatus?.OVERDUE ?: 0.0,
+                        creditVoid = trxnSummary?.creditsByStatus?.VOID ?: 0.0,
+                        debtPending = trxnSummary?.debitsByStatus?.PENDING ?: 0.0,
+                        debtCleared = trxnSummary?.debitsByStatus?.CLEARED ?: 0.0,
+                        debtOverdue = trxnSummary?.debitsByStatus?.OVERDUE ?: 0.0,
+                        debtVoid = trxnSummary?.debitsByStatus?.VOID ?: 0.0,
                     )
                     FilterRow(
                         transactionFilters = transactionFilters,
@@ -283,7 +251,7 @@ fun HomeUi(
                         }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    TransactionList(transactions = transactionFilters, onClick = {
+                    TransactionList(transactions = tags, onClick = {
                         navigateToDetails(it)
                     })
                 }
@@ -294,7 +262,7 @@ fun HomeUi(
 
 @Composable
 fun TransactionList(
-    transactions: Map<String?, List<Transaction>>?,
+    transactions: Tags?,
     onClick: (transaction: List<Transaction>) -> Unit,
 ) {
     if (transactions.isNullOrEmpty()) {
@@ -303,6 +271,15 @@ fun TransactionList(
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
+
+            itemsIndexed(transactions){index: Int, item: Tags.TagsItem ->
+                HorizontalDivider(color = Color((0xFFBBA76D)))
+                TransactionItem(transaction = item, onClick = {
+                    //onClick(u)
+                })
+            }
+
+/*
             transactions.forEach { (t, u) ->
                 if (u.isNotEmpty()) {
                     item {
@@ -313,14 +290,14 @@ fun TransactionList(
                     }
                 }
             }
+*/
         }
     }
 }
 
 @Composable
 private fun TransactionItem(
-    transaction: Transaction,
-    u: List<Transaction>,
+    transaction: Tags.TagsItem,
     onClick: () -> Unit,
 ) {
 
@@ -365,7 +342,7 @@ private fun TransactionItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "last: ${formatMillisToDate(transaction.timeInMiles ?: 0)}",
+                    text = "last: ${transaction.lastUsedDate}",
                     fontSize = 12.sp.nonScaledSp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.DarkGray
@@ -375,9 +352,9 @@ private fun TransactionItem(
         }
 
         Column(horizontalAlignment = Alignment.End) {
-            val netBalance = calculateNetBalance(u)
+            //val netBalance = calculateNetBalance(u)
             Text(
-                text = formatToINR(netBalance),
+                text = formatToINR(transaction.balance),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp.nonScaledSp,
                 modifier = Modifier.padding(end = 10.dp)
@@ -391,10 +368,10 @@ private fun TransactionItem(
                           textAlign = TextAlign.Center
                       )*/
             Text(
-                text = formatNetBalanceMessageShort(netBalance),
+                text = transaction.settlementMessage,
                 fontSize = 12.sp.nonScaledSp,
                 fontFamily = FontFamily.SansSerif,
-                color = if (transaction.type == Transaction.Type.CREDIT) Income else Expense,
+                color = if (transaction.lastTransactionType == Transaction.Type.CREDIT.toString()) Income else Expense,
                 modifier = Modifier.padding(end = 10.dp)
             )
         }

@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
-import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.getInitialTransaction
 import com.ruchitech.cashentery.helper.getRandomQuote
@@ -49,6 +48,7 @@ import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusSwitch
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.TempColor
 import com.ruchitech.cashentery.ui.theme.montserrat_medium
+import com.ruchitech.cashentery.R
 
 
 @Composable
@@ -108,9 +108,12 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                     fontFamily = montserrat_medium
                 )
 
-                Image(painterResource(id = R.drawable.ic_receipt), contentDescription = null, modifier = Modifier.clickable {
-                    printAndShare = true
-                })
+                Image(
+                    painterResource(id = R.drawable.ic_receipt),
+                    contentDescription = null,
+                    modifier = Modifier.clickable {
+                        printAndShare = true
+                    })
 
             }
 
@@ -195,13 +198,13 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                             viewModel.addTrans(newTransaction)
                         }
                     }
-   /*                 SaveAndShareButton(newTransaction.type) {
-                        if (newTransaction.amount?.isNaN() == false && !newTransaction.tag.isNullOrEmpty()) {
-                            viewModel.addTrans(newTransaction)
-                            printAndShare = true
-                        }
-                    }
-                    SpacerHeight(16)*/
+                    /*                 SaveAndShareButton(newTransaction.type) {
+                                         if (newTransaction.amount?.isNaN() == false && !newTransaction.tag.isNullOrEmpty()) {
+                                             viewModel.addTrans(newTransaction)
+                                             printAndShare = true
+                                         }
+                                     }
+                                     SpacerHeight(16)*/
                     IconButton(
                         onClick = {
                             onBack()
@@ -217,7 +220,11 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 }
             }
             SpacerHeight(24)
-            Text(text = randomQuote, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+            Text(
+                text = randomQuote,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
 
         }
         if (printAndShare) {

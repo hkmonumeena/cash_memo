@@ -26,6 +26,7 @@ data class Transaction(
      * A unique identifier for the transaction.
      */
     val id: String? = null,
+    val authId: String? = null,
 
     /**
      * The date of the transaction in a string format (e.g., "2024-07-23").

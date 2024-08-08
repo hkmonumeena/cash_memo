@@ -1,17 +1,25 @@
 package com.ruchitech.cashentery.ui.screens.home
 
 import android.util.Log
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ruchitech.cashentery.helper.Event
 import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
+import com.ruchitech.cashentery.retrofit.model.Tags
+import com.ruchitech.cashentery.retrofit.model.TrnxSummary
+import com.ruchitech.cashentery.retrofit.remote.Status
+import com.ruchitech.cashentery.retrofit.repository.AccountRepository
 import com.ruchitech.cashentery.ui.screens.Repository
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,12 +35,19 @@ fun formatMillisToDate(millis: Long): String {
 class HomeViewModel @Inject constructor(
     private val appPreference: AppPreference,
     private val repository: Repository,
+    private val accountRepository: AccountRepository,
 ) : SharedViewModel() {
     private val _transactionsFlow = MutableStateFlow<List<Transaction>>(emptyList())
     val transactionsFlow: StateFlow<List<Transaction>> = _transactionsFlow
 
     private val _groupByTag = MutableStateFlow<Map<String?, List<Transaction>>?>(null)
     val groupByTag: StateFlow<Map<String?, List<Transaction>>?> = _groupByTag
+
+    private val _trxnSummary = MutableStateFlow<TrnxSummary?>(null)
+    val trnxSummary: StateFlow<TrnxSummary?> = _trxnSummary
+
+    private val _trxnTags = MutableStateFlow<Tags?>(null)
+    val trxnTags: StateFlow<Tags?> = _trxnTags
 
     private val _sumOfExpense = MutableStateFlow<Double?>(0.0)
     val sumOfExpense: StateFlow<Double?> = _sumOfExpense
@@ -47,48 +62,90 @@ class HomeViewModel @Inject constructor(
 
     init {
         fetchTags()
+        fetchMongoDbSummaryTrnx()
     }
 
     // Define the page size
     private val pageSize = 10
 
+
+    private fun fetchMongoDbSummaryTrnx() {
+        viewModelScope.launch {
+            accountRepository.transactionSummary().distinctUntilChanged()
+                .collectLatest { resources ->
+                    when (resources.status) {
+                        Status.INITIAL -> Unit
+                        Status.EMPTY -> Unit
+                        Status.SUCCESS -> {
+                            val tags = resources.data
+                            _trxnSummary.value = tags
+                            fetchMongoDbTags()
+                            Log.e("fkdjgld", tags.toString())
+                        }
+                        Status.ERROR -> {}
+                        Status.LOADING -> {}
+                    }
+                }
+        }
+    }
+
+    private fun fetchMongoDbTags() {
+        viewModelScope.launch {
+            accountRepository.transactionTags().distinctUntilChanged()
+                .collectLatest { resources ->
+                    when (resources.status) {
+                        Status.INITIAL -> Unit
+                        Status.EMPTY -> Unit
+                        Status.SUCCESS -> {
+                            val tags = resources.data
+                            _trxnTags.value = tags
+                            Log.e("fkdjgld", tags.toString())
+                        }
+                        Status.ERROR -> {}
+                        Status.LOADING -> {}
+                    }
+                }
+        }
+    }
+
+
+
+
     // Function to fetch tags with pagination
     fun fetchTags(lastVisible: DocumentSnapshot? = null) {
-        val query = db.collection("users").document(appPreference.userId ?: "")
-            .collection("transactions")
-            .orderBy("timeInMiles") // Order by a unique field or timestamp
-            .limit(10L)
+        val query =
+            db.collection("users").document(appPreference.userId ?: "").collection("transactions")
+                .orderBy("timeInMiles") // Order by a unique field or timestamp
+                .limit(10L)
 
         // If there is a last visible document, start after it
         val paginatedQuery = lastVisible?.let {
             query.startAfter(it)
         } ?: query
 
-        paginatedQuery.get()
-            .addOnSuccessListener { querySnapshot ->
-                val uniqueTags = mutableSetOf<String>()
-                val tags = querySnapshot.documents.mapNotNull { document ->
-                    val tag = document.getString("tag")
-                    if (tag != null) {
-                        uniqueTags.add(tag)
-                    }
-                }
-
-                // Do something with the tags
-                println("Tags: $tags")
-                Log.e("fkmjihnbgytgf", "fetchTags: $uniqueTags")
-
-                // Get the last visible document for pagination
-                val lastDocument = querySnapshot.documents.lastOrNull()
-
-                // Optionally: fetch next page
-                if (lastDocument != null) {
-               //     fetchTags(lastDocument)
+        paginatedQuery.get().addOnSuccessListener { querySnapshot ->
+            val uniqueTags = mutableSetOf<String>()
+            val tags = querySnapshot.documents.mapNotNull { document ->
+                val tag = document.getString("tag")
+                if (tag != null) {
+                    uniqueTags.add(tag)
                 }
             }
-            .addOnFailureListener { exception ->
-                println("Error fetching tags: $exception")
+
+            // Do something with the tags
+            println("Tags: $tags")
+            Log.e("fkmjihnbgytgf", "fetchTags: $uniqueTags")
+
+            // Get the last visible document for pagination
+            val lastDocument = querySnapshot.documents.lastOrNull()
+
+            // Optionally: fetch next page
+            if (lastDocument != null) {
+                //     fetchTags(lastDocument)
             }
+        }.addOnFailureListener { exception ->
+            println("Error fetching tags: $exception")
+        }
     }
 
 
@@ -113,12 +170,10 @@ class HomeViewModel @Inject constructor(
         transactions.clear()
         transactions.addAll(transaction2s)
         _sumOfExpense.value =
-            transactions.filter { it.type == Transaction.Type.DEBIT }
-                .sumOf { it.amount ?: 0.0 }
+            transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
 
         _sumOfIncome.value =
-            transactions.filter { it.type == Transaction.Type.CREDIT }
-                .sumOf { it.amount ?: 0.0 }
+            transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
 
         _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
         _groupByTag.value = transactions.groupBy {

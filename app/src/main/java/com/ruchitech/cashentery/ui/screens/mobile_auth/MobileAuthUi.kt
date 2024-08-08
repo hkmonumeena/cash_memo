@@ -13,12 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,14 +56,17 @@ import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
 @Composable
-fun MobileAuthUi(viewModel: MobileAuthViewModel, onCodeSent: (verificationId: String?) -> Unit) {
+fun MobileAuthUi(
+    viewModel: MobileAuthViewModel,
+    onCodeSent: (verificationId: String?, mobileNumber: String?) -> Unit,
+) {
     var amount by remember { mutableStateOf("+91") }
     val state by viewModel.authState.collectAsState()
     LaunchedEffect(state) {
         when (state) {
             MobileAuthViewModel.AuthState.Authenticated -> {}
             MobileAuthViewModel.AuthState.CodeSent -> {
-                onCodeSent(viewModel.verificationId)
+                onCodeSent(viewModel.verificationId, amount)
                 viewModel.changeState()
             }
 
@@ -204,18 +204,18 @@ fun MobileAuthUi(viewModel: MobileAuthViewModel, onCodeSent: (verificationId: St
                 intent.putExtra("type", "Privacy Policy")
                 context.startActivity(intent)
             })
-    /*        Text(
-                text = "To verify your identity, we will send a One-Time Password (OTP) to the mobile number you entered. Please ensure that the number is correct and accessible. The OTP will be used for security purposes and to complete the verification process.",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp.nonScaledSp,
-                    color = Color(0xFF333333),
-                    lineHeight = 20.sp // Add this to increase the line spacing
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )*/
+            /*        Text(
+                        text = "To verify your identity, we will send a One-Time Password (OTP) to the mobile number you entered. Please ensure that the number is correct and accessible. The OTP will be used for security purposes and to complete the verification process.",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp.nonScaledSp,
+                            color = Color(0xFF333333),
+                            lineHeight = 20.sp // Add this to increase the line spacing
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )*/
 
         }
     }
