@@ -84,7 +84,6 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
     }
     val tags by viewModel.categories.collectAsState()
     var printAndShare by remember { mutableStateOf(false) }
-    val randomQuote = getRandomQuote(context)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -221,7 +220,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
             }
             SpacerHeight(24)
             Text(
-                text = randomQuote,
+                text = viewModel.quoteOfTheTrnx.value,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )

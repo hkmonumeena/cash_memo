@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.add_transactions
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
@@ -9,11 +10,13 @@ import com.ruchitech.cashentery.helper.Event
 import com.ruchitech.cashentery.helper.EventEmitter
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.SharedViewModel
+import com.ruchitech.cashentery.helper.getRandomQuote
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
 import com.ruchitech.cashentery.retrofit.remote.Status
 import com.ruchitech.cashentery.retrofit.repository.AccountRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -23,16 +26,17 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class AddTransactionViewModel @Inject constructor(
     private val myToast: MyToast,
     private val appPreference: AppPreference,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val context: Context,
 ) : SharedViewModel() {
     val showLoading = mutableStateOf(false)
     private val _result = MutableStateFlow<Result?>(null)
@@ -40,17 +44,22 @@ class AddTransactionViewModel @Inject constructor(
     private val db = FirebaseFirestore.getInstance()
     private val _categories =
         MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
-     val categories: StateFlow<List<String>> = _categories
+    val categories: StateFlow<List<String>> = _categories
+
+    var quoteOfTheTrnx = mutableStateOf("")
 
     init {
         Log.e("kiihgfh", "${appPreference.userId}")
+        quoteOfTheTrnx.value = getRandomQuote(context)
     }
 
     fun addTrans(addNewTransaction: Transaction) {
         val tempTagList = categories.value.toMutableList()
         tempTagList.add(
             addNewTransaction.tag?.trim()
-                ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }?:"")
+                ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+                ?: ""
+        )
         _categories.value = tempTagList.toList()
         appPreference.categoriesList = categories.value
         storeTransaction(addNewTransaction)
@@ -75,7 +84,12 @@ class AddTransactionViewModel @Inject constructor(
 
 
             viewModelScope.launch {
-                var newTrnx = transaction.copy(authId = appPreference.userId)
+                val transactionId = UUID.randomUUID().toString()
+                val transactionNumber = transactionId.removeRange(15, transactionId.length)
+                val newTrnx = transaction.copy(
+                    authId = appPreference.userId,
+                    id = transactionNumber
+                )
                 accountRepository.createTransaction(newTrnx).distinctUntilChanged()
                     .collectLatest { resources ->
                         when (resources.status) {

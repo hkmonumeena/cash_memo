@@ -25,6 +25,7 @@ data class Transaction(
     /**
      * A unique identifier for the transaction.
      */
+    val _id: String?=null, // 66b51c842c07c6514faab171
     val id: String? = null,
     val authId: String? = null,
 

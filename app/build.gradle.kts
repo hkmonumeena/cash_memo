@@ -27,6 +27,7 @@ android {
             useSupportLibrary = true
         }
     }
+    flavorDimensions += listOf("environment")
 
     applicationVariants.all {
         outputs.all {
@@ -43,21 +44,19 @@ android {
         }
     }
 
-    flavorDimensions("environment")
-
     productFlavors {
         create("Dev") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"http://16.171.27.231:3000\"")
+            buildConfigField("String", "BASE_URL", "\"https://cash-entry-backend.vercel.app\"")
         }
 
         create("Prod") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"http://16.171.27.231:3000\"")
+            buildConfigField("String", "BASE_URL", "\"https://cash-entry-backend.vercel.app\"")
         }
         create("Local") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"http://16.171.27.231:3000\"")
+            buildConfigField("String", "BASE_URL", "\"https://cash-entry-backend.vercel.app\"")
         }
     }
 

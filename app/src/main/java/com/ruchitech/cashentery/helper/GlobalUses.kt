@@ -4,6 +4,7 @@ import android.content.Context
 import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.navigation.Screen
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -281,8 +282,8 @@ fun calculateNetBalance(transactions: List<Transaction>): Double {
 
 fun formatNetBalanceMessage(netBalance: Double): String {
     return when {
-        netBalance > 0 -> "You will receive Rs. ${String.format("%.2f", netBalance)}."
-        netBalance < 0 -> "You need to pay Rs. ${String.format("%.2f", -netBalance)}."
+        netBalance > 0 -> "You will receive ${formatToINR(netBalance)}."
+        netBalance < 0 -> "You need to pay ${formatToINR(netBalance)}."
         else -> "Your account is settled. No payment needed."
     }
 }

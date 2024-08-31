@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -31,7 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.R
-import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.common_ui.SpacerWidth
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfMediumFont
@@ -39,8 +36,8 @@ import com.ruchitech.cashentery.ui.theme.sfMediumFont
 @Composable
 fun TransactionsAppBar(
     onBack: () -> Unit,
-    onTypeSelected: (Transaction.Type?) -> Unit,
-    selectedType: Transaction.Type?
+    onFliterClick: () -> Unit,
+    isFilteredData: Boolean,
 ) {
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -55,7 +52,7 @@ fun TransactionsAppBar(
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onBack() }) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null,
                     Modifier.size(35.dp)
                 )
@@ -69,10 +66,10 @@ fun TransactionsAppBar(
             )
         }
 
-        Box(modifier = Modifier.clickable { isDropdownExpanded = true }) {
+        Box(modifier = Modifier.clickable { onFliterClick() }) {
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    text = selectedType?.name ?: "All", // Display the selected filter
+                    text = if (isFilteredData) "Filtered" else "", // Display the selected filter
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp.nonScaledSp,
                     color = Color.Gray,
@@ -84,30 +81,6 @@ fun TransactionsAppBar(
                     contentDescription = "Date Range",
                     modifier = Modifier
                         .size(25.dp)
-                )
-            }
-            DropdownMenu(
-                expanded = isDropdownExpanded,
-                onDismissRequest = { isDropdownExpanded = false }
-            ) {
-                // Menu item for each transaction type
-                Transaction.Type.values().forEach { type ->
-                    DropdownMenuItem(
-                        onClick = {
-                            onTypeSelected(type)
-                            isDropdownExpanded = false
-                        },
-                        text = {
-                            Text(text = type.name)
-                        }
-                    )
-                }
-                DropdownMenuItem(
-                    onClick = {
-                        onTypeSelected(null) // Reset filter to show all types
-                        isDropdownExpanded = false
-                    },
-                    text = { Text(text = "All") }
                 )
             }
         }

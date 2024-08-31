@@ -3,7 +3,6 @@ package com.ruchitech.cashentery.ui.screens.home
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ruchitech.cashentery.helper.Event
 import com.ruchitech.cashentery.helper.SharedViewModel
@@ -14,6 +13,7 @@ import com.ruchitech.cashentery.retrofit.remote.Status
 import com.ruchitech.cashentery.retrofit.repository.AccountRepository
 import com.ruchitech.cashentery.ui.screens.Repository
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import com.ruchitech.cashentery.ui.screens.transactions.FilterTrnx
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,14 +59,32 @@ class HomeViewModel @Inject constructor(
     private val db = FirebaseFirestore.getInstance()
     var transactions = ArrayList<Transaction>()
     var data = repository.fetchAllTransactions()
+    private val _categories =
+        MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
+    val categories: StateFlow<List<String>> = _categories
+
+    private val _filterTrnx = MutableStateFlow<FilterTrnx>(
+        FilterTrnx(
+            account = listOf(), amount = FilterTrnx.Amount(
+                max = 100000.0, min = 0.0
+            ), authId = appPreference.userId ?: "", date = FilterTrnx.Date(
+                end = "", start = ""
+            ), limit = 100, page = 1, status = listOf(), tag = listOf(), type = listOf()
+        )
+    )
+    val filterTrnx: StateFlow<FilterTrnx> = _filterTrnx
+
 
     init {
-        fetchTags()
         fetchMongoDbSummaryTrnx()
     }
 
     // Define the page size
     private val pageSize = 10
+
+    fun refreshData() {
+        fetchMongoDbSummaryTrnx()
+    }
 
 
     private fun fetchMongoDbSummaryTrnx() {
@@ -77,13 +95,19 @@ class HomeViewModel @Inject constructor(
                         Status.INITIAL -> Unit
                         Status.EMPTY -> Unit
                         Status.SUCCESS -> {
+                            hideLoading()
                             val tags = resources.data
                             _trxnSummary.value = tags
                             fetchMongoDbTags()
-                            Log.e("fkdjgld", tags.toString())
                         }
-                        Status.ERROR -> {}
-                        Status.LOADING -> {}
+
+                        Status.ERROR -> {
+                            hideLoading()
+                        }
+
+                        Status.LOADING -> {
+                            showLoading()
+                        }
                     }
                 }
         }
@@ -91,138 +115,36 @@ class HomeViewModel @Inject constructor(
 
     private fun fetchMongoDbTags() {
         viewModelScope.launch {
-            accountRepository.transactionTags().distinctUntilChanged()
+            accountRepository.transactionTags(filterTrnx.value).distinctUntilChanged()
                 .collectLatest { resources ->
                     when (resources.status) {
                         Status.INITIAL -> Unit
                         Status.EMPTY -> Unit
                         Status.SUCCESS -> {
+                            hideLoading()
                             val tags = resources.data
+                            tags?.sortByTagName()
+                            appPreference.categoriesList = tags?.map { it.tag } ?: emptyList()
                             _trxnTags.value = tags
-                            Log.e("fkdjgld", tags.toString())
                         }
-                        Status.ERROR -> {}
-                        Status.LOADING -> {}
+
+                        Status.ERROR -> {
+                            hideLoading()
+                            Log.e("Gdfgfdgf", "fetchMongoDbTags: ${resources.message}")
+                        }
+
+                        Status.LOADING -> {
+                            showLoading()
+                        }
                     }
                 }
         }
     }
 
-
-
-
-    // Function to fetch tags with pagination
-    fun fetchTags(lastVisible: DocumentSnapshot? = null) {
-        val query =
-            db.collection("users").document(appPreference.userId ?: "").collection("transactions")
-                .orderBy("timeInMiles") // Order by a unique field or timestamp
-                .limit(10L)
-
-        // If there is a last visible document, start after it
-        val paginatedQuery = lastVisible?.let {
-            query.startAfter(it)
-        } ?: query
-
-        paginatedQuery.get().addOnSuccessListener { querySnapshot ->
-            val uniqueTags = mutableSetOf<String>()
-            val tags = querySnapshot.documents.mapNotNull { document ->
-                val tag = document.getString("tag")
-                if (tag != null) {
-                    uniqueTags.add(tag)
-                }
-            }
-
-            // Do something with the tags
-            println("Tags: $tags")
-            Log.e("fkmjihnbgytgf", "fetchTags: $uniqueTags")
-
-            // Get the last visible document for pagination
-            val lastDocument = querySnapshot.documents.lastOrNull()
-
-            // Optionally: fetch next page
-            if (lastDocument != null) {
-                //     fetchTags(lastDocument)
-            }
-        }.addOnFailureListener { exception ->
-            println("Error fetching tags: $exception")
-        }
-    }
-
-
-    fun updateData() {
-        data = repository.fetchAllTransactions()
-        //   fetchTransactions()
-    }
-
-
-    private fun updateDataNew(newData: List<Transaction>) {
-
-    }
-
-
-    fun fetchTransactions(transaction2s: List<Transaction>) {
-        val userId = appPreference.userId // "W5mzbR4YFSTClH6Tsf28LilEH9d2" //auth.currentUser?.uid
-        if (userId == null) {
-            println("User is not authenticated.")
-            _transactionsFlow.value = emptyList()
-            return
-        }
-        transactions.clear()
-        transactions.addAll(transaction2s)
-        _sumOfExpense.value =
-            transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
-
-        _sumOfIncome.value =
-            transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
-
-        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
-        _groupByTag.value = transactions.groupBy {
-            it.tag
-        }.mapValues { entry ->
-            entry.value.sortedByDescending { it.timeInMiles }
-        }
-        appPreference.categoriesList = transactions.map { it.tag ?: "" }.distinct().toList()
-
-    }
-
-    private fun updateTransaction(updatedTransaction: Transaction) {
-        // Find the index of the transaction to be updated
-        val index = transactions.indexOfFirst { it.id == updatedTransaction.id }
-
-        // If the transaction exists, update it
-        if (index != -1) {
-            transactions[index] = updatedTransaction
-        }
-
-        _sumOfExpense.value =
-            transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
-
-        _sumOfIncome.value =
-            transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
-
-        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
-
-        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
-    }
-
-    private fun deleteTransaction(deleteId: String) {
-        // Find the index of the transaction to be deleted
-        val index = transactions.indexOfFirst { it.id == deleteId }
-
-        // If the transaction exists, remove it
-        if (index != -1) {
-            transactions.removeAt(index)
-        }
-
-        _sumOfExpense.value =
-            transactions.filter { it.type == Transaction.Type.DEBIT }.sumOf { it.amount ?: 0.0 }
-
-        _sumOfIncome.value =
-            transactions.filter { it.type == Transaction.Type.CREDIT }.sumOf { it.amount ?: 0.0 }
-
-        _transactionsFlow.value = transactions.sortedByDescending { it.timeInMiles }
-
-        _groupByTag.value = transactions.sortedByDescending { it.timeInMiles }.groupBy { it.tag }
+    fun getFilteredTransactions(trnx: FilterTrnx) {
+        trnx.authId = appPreference.userId ?: ""
+        _filterTrnx.value = trnx
+        fetchMongoDbTags()
     }
 
     fun signout() {
@@ -236,15 +158,9 @@ class HomeViewModel @Inject constructor(
         super.handleInternalEvent(event)
         when (event) {
             is Event.HomeViewModel -> {
-                if (event.transaction != null) {
-                    updateTransaction(event.transaction)
-                }
-                if (!event.deleteId.isNullOrEmpty()) {
-                    deleteTransaction(event.deleteId)
-                }
                 if (event.refreshPage) {
-                    //fetchTransactions()
-                    data = repository.fetchAllTransactions()
+                    Log.e("gjfmfgg", "handleInternalEvent: refreshed")
+                    refreshData()
                 }
             }
 

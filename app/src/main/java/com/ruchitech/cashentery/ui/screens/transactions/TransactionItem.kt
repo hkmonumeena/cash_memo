@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
-import com.ruchitech.cashentery.ui.screens.home.formatMillisToDate
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
@@ -35,7 +34,7 @@ import com.ruchitech.cashentery.ui.theme.sfSemibold
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TransactionItem(item: Transaction,onClick: () -> Unit, onLongClick: () -> Unit) {
+fun TransactionItem(item: Transaction, onClick: () -> Unit, onLongClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -68,7 +67,11 @@ fun TransactionItem(item: Transaction,onClick: () -> Unit, onLongClick: () -> Un
             )
         }
 
-        Row(modifier = Modifier.fillMaxWidth().padding(end = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = 10.dp), horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             var statusColor = Color(0xFF4CAF50)
             val statusStr =
                 when (item.status) {
@@ -102,7 +105,9 @@ fun TransactionItem(item: Transaction,onClick: () -> Unit, onLongClick: () -> Un
                 fontSize = 12.sp.nonScaledSp,
                 color = Color.DarkGray,
                 lineHeight = 14.sp.nonScaledSp,
-                modifier = Modifier.weight(1f).padding(start = 10.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 10.dp)
 
             )
 
@@ -123,19 +128,32 @@ fun TransactionItem(item: Transaction,onClick: () -> Unit, onLongClick: () -> Un
 }
 
 @Composable
-fun TransactionHeader(u: String?, timeInMiles: Long?) {
+fun TransactionHeader(u: String?, netBalance: Double?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(40.dp)
             .background(Color(0xFFDACB9F))
             .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(imageVector = Icons.Outlined.DateRange, contentDescription = null, tint = Color.Gray)
-        Spacer(modifier = Modifier.width(5.dp))
+        Row {
+            Icon(
+                imageVector = Icons.Outlined.DateRange,
+                contentDescription = null,
+                tint = Color.Gray
+            )
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+                text = u ?: "",//formatMillisToDate(timeInMiles?: 0),
+                color = Color.DarkGray,
+                fontSize = 12.sp.nonScaledSp,
+                fontFamily = sfMediumFont
+            )
+        }
         Text(
-            text = formatMillisToDate(timeInMiles?: 0),
+            text = formatToINR(netBalance ?: 0.0),//formatMillisToDate(timeInMiles?: 0),
             color = Color.DarkGray,
             fontSize = 12.sp.nonScaledSp,
             fontFamily = sfMediumFont

@@ -1,6 +1,5 @@
 package com.ruchitech.cashentery.ui.screens.chatview
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,21 +24,22 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,8 +65,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.Result
-import com.ruchitech.cashentery.helper.calculateNetBalance
 import com.ruchitech.cashentery.helper.formatNetBalanceMessage
+import com.ruchitech.cashentery.retrofit.model.TransactionsBytag
 import com.ruchitech.cashentery.ui.screens.add_transactions.AmountField
 import com.ruchitech.cashentery.ui.screens.add_transactions.DateField
 import com.ruchitech.cashentery.ui.screens.add_transactions.RemarksField
@@ -105,8 +105,9 @@ fun TransactionDetailsUi(
 ) {
 
     val data by viewModel.transactionsFlow.collectAsState()
+    val isLoading by viewModel.circularLoadingIndicator.collectAsState()
     val context = LocalContext.current
-    (context as MainActivity).lastTagUsed = data.firstOrNull()?.tag
+    (context as MainActivity).lastTagUsed = data?.transactions?.firstOrNull()?.tag
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     var dataToEdit by remember { mutableStateOf<Transaction?>(null) }
@@ -116,30 +117,28 @@ fun TransactionDetailsUi(
     val selectedTabIndex = viewPagerState.currentPage
     val scope = rememberCoroutineScope()
     // Memoize filtered transactions
-    val filteredTransactions by remember(data, selectedTabIndex) {
+    val filteredTransactions by remember(data?.transactions, selectedTabIndex) {
         derivedStateOf {
             when (tabs[selectedTabIndex]) {
-                "Cleared" -> data.filter { it.status == Transaction.Status.CLEARED }
-                "Pending" -> data.filter { it.status == Transaction.Status.PENDING }
-                "Overdue" -> data.filter { it.status == Transaction.Status.OVERDUE }
-                "Void" -> data.filter { it.status == Transaction.Status.VOID }
-                else -> data // All transactions
+                "Cleared" -> data?.transactions?.filter { it.status == Transaction.Status.CLEARED }
+                "Pending" -> data?.transactions?.filter { it.status == Transaction.Status.PENDING }
+                "Overdue" -> data?.transactions?.filter { it.status == Transaction.Status.OVERDUE }
+                "Void" -> data?.transactions?.filter { it.status == Transaction.Status.VOID }
+                else -> data?.transactions // All transactions
             }
         }
     }
     var printAndShare by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = result) {
-        val netBalance = calculateNetBalance(data)
-
-        Log.e("kljkhghfg", "TransactionDetailsUi: ${formatNetBalanceMessage(netBalance)}")
+        // val netBalance = calculateNetBalance(data)
 
         when (result) {
             Result.Error -> {}
             Result.Success -> {
                 showDialog = false
                 viewModel.resetState()
-                if (data.isEmpty()) {
+                if (data?.transactions.isNullOrEmpty()) {
                     onBack()
                 }
                 //onSuccess()
@@ -167,10 +166,13 @@ fun TransactionDetailsUi(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { onBack() }) {
-                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null
+                    )
                 }
                 Spacer(modifier = Modifier.width(10.dp))
-                data.firstOrNull()?.tag?.replaceFirstChar {
+                data?.transactions?.firstOrNull()?.tag?.replaceFirstChar {
                     if (it.isLowerCase()) it.titlecase(
                         Locale.getDefault()
                     ) else it.toString()
@@ -183,7 +185,7 @@ fun TransactionDetailsUi(
                     )
                 }
             }
-            Divider()
+            HorizontalDivider()
             HorizontalPager(
                 state = viewPagerState,
                 modifier = Modifier
@@ -192,13 +194,13 @@ fun TransactionDetailsUi(
                     .padding(bottom = 200.dp),
                 verticalAlignment = Alignment.Top
             ) { page ->
-                if (filteredTransactions.isEmpty()) {
+                if (filteredTransactions.isNullOrEmpty()) {
                     EmptyTransactionUi()
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        itemsIndexed(filteredTransactions) { index, item ->
+                        itemsIndexed(filteredTransactions!!) { index, item ->
                             ChatBox(transaction = item, onClick = {
                                 showDialog = true
                                 dataToEdit = item
@@ -213,11 +215,7 @@ fun TransactionDetailsUi(
                     }
                 }
             }
-
-
-
-
-            Divider()
+            HorizontalDivider()
         }
         Card(
             modifier = Modifier
@@ -226,13 +224,13 @@ fun TransactionDetailsUi(
             shape = RectangleShape,
             colors = CardDefaults.cardColors(containerColor = Color(0xFFDACB9F))
         ) {
-            Divider()
+            HorizontalDivider()
             TabRow(
                 modifier = Modifier,
                 selectedTabIndex = selectedTabIndex,
                 containerColor = MainBackgroundSurface,
                 indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
+                    SecondaryIndicator(
                         Modifier.tabIndicatorOffset(tabPositions[viewPagerState.currentPage]),
                         color = Color.Black
                     )
@@ -255,43 +253,14 @@ fun TransactionDetailsUi(
                     }
                 }
             }
-            val netBalance = calculateNetBalance(data)
-            Text(text = formatNetBalanceMessage(netBalance), modifier = Modifier.fillMaxWidth().padding(top = 10.dp), textAlign = TextAlign.Center)
-
-            // TransactionStatusTable()
-
-            Row(
+            Text(
+                text = formatNetBalanceMessage(data?.summary?.netBalance ?: 0.0),
                 modifier = Modifier
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.Top
-            ) {
-                StatusSummary(
-                    title = "",
-                    data = data.filter { it.type == Transaction.Type.CREDIT },
-                    statuses = listOf(
-                        Transaction.Status.PENDING to "a",
-                        Transaction.Status.PENDING to "Pending",
-                        Transaction.Status.OVERDUE to "Overdue",
-                        Transaction.Status.CLEARED to "Cleared",
-                        Transaction.Status.VOID to "Void"
-                    ),
-                    type = 0
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                StatusSummary(
-                    title = "",
-                    data = data.filter { it.type == Transaction.Type.DEBIT },
-                    statuses = listOf(
-                        Transaction.Status.PENDING to "a",
-                        Transaction.Status.PENDING to "Pending",
-                        Transaction.Status.OVERDUE to "Overdue",
-                        Transaction.Status.CLEARED to "Cleared",
-                        Transaction.Status.VOID to "Void",
-                    ),
-                    type = 1
-                )
-            }
-
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                textAlign = TextAlign.Center
+            )
+            StatusSummary(data?.summary)
         }
 
         if (showDialog) {
@@ -320,7 +289,7 @@ fun TransactionDetailsUi(
 
         if (showDeleteDialog) {
             DeleteConfirmationDialog(onConfirm = {
-                viewModel.deleteTransactionDb(dataToEdit?.id ?: "", dataToEdit)
+                viewModel.deleteTransactionDb(dataToEdit?._id ?: "")
                 showDeleteDialog = false
             }) {
                 showDeleteDialog = false
@@ -352,47 +321,113 @@ fun TransactionDetailsUi(
             }
         }
 
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier
+                .align(Alignment.Center)
+                .size(60.dp))
+        }
 
     }
 }
 
 @Composable
-fun StatusSummary(
-    title: String,
-    data: List<Transaction>,
-    statuses: List<Pair<Transaction.Status, String>>,
-    type: Int,
-) {
+fun StatusSummary(summary: TransactionsBytag.Summary?) {
     Column {
-        SpacerHeight(8)
-        statuses.forEach { (status, label) ->
-            val total = data.filter { it.status == status }.sumOf { it.amount ?: 0.0 }
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 10.dp)
-            ) {
-                if (type == 0) {
-                    Text(
-                        modifier = Modifier.width(75.dp),
-                        text = if (label == "a") "STATUS" else label,
-                        fontSize = 13.sp.nonScaledSp,
-                        fontFamily = sfMediumFont,
-                        fontWeight = if (label == "a") FontWeight.Bold else FontWeight.Medium
-                    )
-                }
-                Text(
-                    text = if (label == "a" && type == 0) "INCOME" else if (label == "a" && type == 1) "EXPENSE" else formatToINR(
-                        total
-                    ),
-                    fontSize = if (label == "a" && type == 0) 14.sp.nonScaledSp else 13.sp.nonScaledSp,
-                    fontFamily = sfMediumFont,
-                    fontWeight = if (label == "a") FontWeight.Bold else FontWeight.Medium
-                )
-            }
+        SpacerHeight(4)
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 10.dp)
+        ) {
+            Text(
+                modifier = Modifier.width(75.dp),
+                text = "STATUS",
+                fontSize = 13.sp.nonScaledSp,
+                fontFamily = sfMediumFont,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "CREDIT",
+                fontSize = 14.sp.nonScaledSp,
+                fontFamily = sfMediumFont,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            SpacerWidth(32)
+            Text(
+                text = "DEBIT",
+                fontSize = 14.sp.nonScaledSp,
+                fontFamily = sfMediumFont,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp)
+            )
         }
-        SpacerHeight(10)
+        SpacerHeight(5)
+        SummaryStatus(
+            statusLabel = "Pending",
+            income = summary?.creditPending,
+            expense = summary?.debitPending
+        )
+
+        SummaryStatus(
+            statusLabel = "Overdue",
+            income = summary?.creditOverdue,
+            expense = summary?.debitOverdue
+        )
+
+        SummaryStatus(
+            statusLabel = "Cleared",
+            income = summary?.creditCleared,
+            expense = summary?.debitCleared
+        )
+        SummaryStatus(
+            statusLabel = "Void",
+            income = summary?.creditVoid,
+            expense = summary?.debitVoid
+        )
     }
+
+    SpacerHeight(10)
 }
+
+@Composable
+fun SummaryStatus(
+    statusLabel: String?,
+    income: Double?,
+    expense: Double?,
+) {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 10.dp)
+    ) {
+        Text(
+            modifier = Modifier.width(75.dp),
+            text = statusLabel ?: "",
+            fontSize = 13.sp.nonScaledSp,
+            fontFamily = sfMediumFont,
+            fontWeight = FontWeight.Bold,
+        )
+
+        SpacerWidth(16)
+
+        Text(
+            text = formatToINR(income ?: 0.0),
+            fontSize = 14.sp.nonScaledSp,
+            fontFamily = sfMediumFont,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.width(120.dp)
+        )
+
+        Text(
+            text = formatToINR(expense ?: 0.0),
+            fontSize = 14.sp.nonScaledSp,
+            fontFamily = sfMediumFont,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.width(120.dp)
+        )
+    }
+
+}
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -503,6 +538,7 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                 )
             }
         }
+
     }
 }
 
@@ -537,7 +573,7 @@ private fun EditTransactionScreen(
         if (showDeleteDialog) {
             DeleteConfirmationDialog(onConfirm = {
                 onBack()
-                viewModel.deleteTransactionDb(dataToEdit?.id ?: "", dataToEdit)
+                viewModel.deleteTransactionDb(dataToEdit?._id ?: "")
                 showDeleteDialog = false
             }) {
                 showDeleteDialog = false
@@ -553,7 +589,10 @@ private fun EditTransactionScreen(
                 .background(TempColor, shape = CircleShape)
                 .align(Alignment.BottomStart)
         ) {
-            Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = null)
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = null
+            )
         }
 
         Column(
@@ -613,7 +652,10 @@ private fun EditTransactionScreen(
                         .background(TempColor, shape = CircleShape)
                         .align(Alignment.BottomStart)
                 ) {
-                    Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = null
+                    )
                 }
 
                 Column(
@@ -709,5 +751,6 @@ private fun EditTransactionScreen(
             }
         }
         LoadingScreen(showLoading = viewModel.showLoading.value, "Updating transaction...")
+
     }
 }

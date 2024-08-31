@@ -56,14 +56,15 @@ fun NavigationComponent(
         composable<Screen.MobileAuth> {
             val viewModel = hiltViewModel<MobileAuthViewModel>()
             if (viewModel.appPreference.isUserLoggedIn) {
+               // viewModel.appPreference.userId = "W5mzbR4YFSTClH6Tsf28LilEH9d2"
                 navHostController.navigate(Screen.Home) {
                     popUpTo(Screen.MobileAuth) { inclusive = true }
                 }
             } else {
                 MobileAuthUi(
                     viewModel = viewModel,
-                    onCodeSent = { code ,mobileNumber->
-                        navHostController.navigate(Screen.VerifyOtp(code,mobileNumber))
+                    onCodeSent = { code, mobileNumber ->
+                        navHostController.navigate(Screen.VerifyOtp(code, mobileNumber))
                     }
                 )
             }
@@ -111,8 +112,8 @@ fun NavigationComponent(
                     navigateTo(navHostController, Screen.Transactions)
                 },
                 navigateToDetails = { transaction ->
-                    val transactionJson = Gson().toJson(transaction)
-                    navigateTo(navHostController, Screen.TransactionDetails(transactionJson))
+                   // val transactionJson = Gson().toJson(transaction)
+                    navigateTo(navHostController, Screen.TransactionDetails(transaction))
                 },
                 onSignOut = {
                     navigateTo(navHostController, Screen.MobileAuth, true)
@@ -136,7 +137,7 @@ fun NavigationComponent(
             var isInitialized by rememberSaveable { mutableStateOf(false) }
 
             if (!isInitialized) {
-                viewModel.getTransactionDetails(args.transactions)
+                viewModel.getData(args.transactions)
                 isInitialized = true
             }
 
