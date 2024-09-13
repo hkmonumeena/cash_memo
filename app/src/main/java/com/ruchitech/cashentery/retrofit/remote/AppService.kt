@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.retrofit.remote
 
+import com.ruchitech.cashentery.retrofit.model.BaseResponse
 import com.ruchitech.cashentery.retrofit.model.Tags
 import com.ruchitech.cashentery.retrofit.model.TransactionsByDate
 import com.ruchitech.cashentery.retrofit.model.TransactionsBytag
@@ -18,6 +19,7 @@ import retrofit2.http.Query
 interface AppService {
     companion object {
         private const val CREATE_USER = "/api/createUser"
+        private const val DELETE_USER = "/api/users/"
         private const val TRANSACTION_SUMMARY = "/api/transactions/summary/"
         private const val TRANSACTION_TAGS = "/api/transactions/tagSummary/"
         private const val CREATE_TRANSACTION= "/api/createTransaction"
@@ -30,6 +32,8 @@ interface AppService {
     @POST(CREATE_USER)
     fun createUser(@Body createUser: CreateUser): Flow<ApiResponse<CreatedUserResponse>>
 
+    @POST(DELETE_USER)
+    fun deleteUser(@Query("authId") authId: String): Flow<ApiResponse<BaseResponse>>
 
     @POST(TRANSACTION_SUMMARY)
     fun transactionSummary(@Query("authId") authId: String): Flow<ApiResponse<TrnxSummary>>

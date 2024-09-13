@@ -60,6 +60,7 @@ fun changeState(){
                 }
 
                 override fun onVerificationFailed(e: FirebaseException) {
+                    myToast.showToast(e.message?:"Exception")
                     _authState.value = AuthState.Error(e.message ?: "Verification failed")
                 }
 
@@ -91,6 +92,7 @@ fun changeState(){
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     _authState.value = AuthState.Authenticated
+                    appPreference.mobileNumber = mobileNumber.value
                     appPreference.userId = auth.uid
                     appPreference.isUserLoggedIn = true
                 } else {

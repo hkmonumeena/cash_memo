@@ -1,6 +1,22 @@
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+/*
+Alias name: alias
+        Creation date: 31 Jul, 2024
+Entry type: PrivateKeyEntry
+        Certificate chain length: 1
+Certificate[1]:
+Owner: OU=gfgf, CN=vfgfg gfg
+        Issuer: OU=gfgf, CN=vfgfg gfg
+        Serial number: 1
+Valid from: Wed Jul 31 22:48:15 IST 2024 until: Sun Jul 25 22:48:15 IST 2049
+Certificate fingerprints:
+SHA1: 87:D2:91:DF:D7:88:6E:0E:8D:0C:C5:0B:B9:24:29:15:9D:D7:B6:F5
+        SHA256: 6B:16:5F:32:76:84:DA:76:39:C9:03:F4:46:74:DC:22:0B:5B:41:12:BD:9C:A8:C6:30:73:47:24:D8:0E:49:DE
+Signature algorithm name: SHA256withRSA
+Subject Public Key Algorithm: 2048-bit RSA key
+Version: 1*/
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,8 +35,8 @@ android {
         applicationId = "com.ruchitech.cashentery"
         minSdk = 23
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

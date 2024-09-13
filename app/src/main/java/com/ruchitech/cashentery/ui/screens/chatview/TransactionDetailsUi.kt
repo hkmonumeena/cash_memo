@@ -131,8 +131,6 @@ fun TransactionDetailsUi(
     var printAndShare by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = result) {
-        // val netBalance = calculateNetBalance(data)
-
         when (result) {
             Result.Error -> {}
             Result.Success -> {

@@ -3,6 +3,7 @@ package com.ruchitech.cashentery.retrofit.repository
 
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.retrofit.RateLimiter
+import com.ruchitech.cashentery.retrofit.model.BaseResponse
 import com.ruchitech.cashentery.retrofit.model.Tags
 import com.ruchitech.cashentery.retrofit.model.TransactionsByDate
 import com.ruchitech.cashentery.retrofit.model.TransactionsBytag
@@ -46,6 +47,12 @@ class AccountRepository
         return networkOnlyResource(fetchFromRemote = {
             appService.transactionTagSummary(appPreference.userId ?: "",filterTrnx)
         }, shouldFetchFromRemote = { repoListRateLimit.shouldFetch("transactionTags${Date()}") })
+    }
+
+    fun deleteAccount(): Flow<Resource<BaseResponse>> {
+        return networkOnlyResource(fetchFromRemote = {
+            appService.deleteUser(appPreference.userId?:"")
+        }, shouldFetchFromRemote = { repoListRateLimit.shouldFetch("deleteAccount${Date()}") })
     }
 
     fun createTransaction(createTransaction: Transaction): Flow<Resource<Transaction>> {

@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ruchitech.cashentery.helper.Event
 import com.ruchitech.cashentery.helper.SharedViewModel
+import com.ruchitech.cashentery.helper.getCurrentMonthStartAndEndDate
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.retrofit.model.Tags
 import com.ruchitech.cashentery.retrofit.model.TrnxSummary
@@ -63,6 +64,8 @@ class HomeViewModel @Inject constructor(
         MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
     val categories: StateFlow<List<String>> = _categories
 
+
+
     private val _filterTrnx = MutableStateFlow<FilterTrnx>(
         FilterTrnx(
             account = listOf(), amount = FilterTrnx.Amount(
@@ -76,12 +79,15 @@ class HomeViewModel @Inject constructor(
 
 
     init {
+        val (start, end) = getCurrentMonthStartAndEndDate()
+        _filterTrnx.value.date.start = start
+        _filterTrnx.value.date.end = end
+
         fetchMongoDbSummaryTrnx()
     }
 
     // Define the page size
     private val pageSize = 10
-
     fun refreshData() {
         fetchMongoDbSummaryTrnx()
     }
@@ -140,6 +146,36 @@ class HomeViewModel @Inject constructor(
                 }
         }
     }
+
+
+     fun deleteAccount(onDelete:()->Unit) {
+        viewModelScope.launch {
+            accountRepository.deleteAccount().distinctUntilChanged()
+                .collectLatest { resources ->
+                    when (resources.status) {
+                        Status.INITIAL -> Unit
+                        Status.EMPTY -> Unit
+                        Status.SUCCESS -> {
+                            hideLoading()
+                            signout()
+                        }
+
+                        Status.ERROR -> {
+                            hideLoading()
+                            signout()
+                            onDelete()
+                            Log.e("Gdfgfdgf", "fetchMongoDbTags: ${resources.message}")
+                        }
+
+                        Status.LOADING -> {
+                            showLoading()
+                        }
+                    }
+                }
+        }
+    }
+
+
 
     fun getFilteredTransactions(trnx: FilterTrnx) {
         trnx.authId = appPreference.userId ?: ""

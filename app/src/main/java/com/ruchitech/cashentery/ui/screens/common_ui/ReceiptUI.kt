@@ -125,7 +125,7 @@ fun ReceiptUI(
 
                 if (settings.showName) {
                     Text(
-                        text = "Monu Meena",
+                        text = "Cash Entry",
                         fontSize = 18.sp.nonScaledSp,
                         fontWeight = FontWeight.Normal,
                         fontFamily = FontFamily.SansSerif,
@@ -137,7 +137,7 @@ fun ReceiptUI(
                 if (settings.showMobile) {
                     SpacerHeight(4)
                     Text(
-                        text = "Mobile: +919131414139",
+                        text = "Mobile: ",
                         fontSize = 14.sp.nonScaledSp,
                         fontWeight = FontWeight.Normal,
                         fontFamily = FontFamily.Monospace,
@@ -147,7 +147,7 @@ fun ReceiptUI(
                     )
                 }
                 Text(
-                    text = "Email: Monum811@gmail.com",
+                    text = "Email: ",
                     fontSize = 14.sp.nonScaledSp,
                     fontWeight = FontWeight.Normal,
                     fontFamily = FontFamily.Monospace,

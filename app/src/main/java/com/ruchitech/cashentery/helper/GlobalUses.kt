@@ -1,12 +1,16 @@
 package com.ruchitech.cashentery.helper
 
 import android.content.Context
+import com.ruchitech.cashentery.BuildConfig.BASE_URL
 import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.navigation.Screen
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
 import org.json.JSONArray
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -21,8 +25,8 @@ const val cash = "CASH"
 const val pending = "PENDING"
 const val PAID = "PAID"
 const val overdue = "OVERDUE"
-const val termsAndCond = "https://btgondia.com/tnc"
-const val privacyPolicy = "https://btgondia.com/Privacy_Policy"
+const val termsAndCond = "$BASE_URL/terms_and_conditions"
+const val privacyPolicy = "$BASE_URL/privacy_policy"
 
 /**
  * Formats the given milliseconds since epoch into a human-readable date and time string.
@@ -296,6 +300,34 @@ fun formatNetBalanceMessageShort(netBalance: Double): String {
     }
 }
 
+
+/**
+ * Returns the start and end dates of the current month in the format "yyyy-MM-dd".
+ *
+ * This function uses the [Calendar] class to calculate the first and last day of the current month.
+ * The dates are formatted as strings using [SimpleDateFormat].
+ *
+ * @return A [Pair] where the first element is the start date of the current month
+ *         and the second element is the end date of the current month, both in "yyyy-MM-dd" format.
+ */
+fun getCurrentMonthStartAndEndDate(): Pair<String, String> {
+    val calendar = Calendar.getInstance()
+
+    // Set the calendar to the start of the current month
+    calendar.set(Calendar.DAY_OF_MONTH, 1)
+    val startOfMonth = calendar.time
+
+    // Set the calendar to the end of the current month
+    calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
+    val endOfMonth = calendar.time
+
+    // Format the dates to 'yyyy-MM-dd'
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val formattedStartOfMonth = dateFormat.format(startOfMonth)
+    val formattedEndOfMonth = dateFormat.format(endOfMonth)
+
+    return Pair(formattedStartOfMonth, formattedEndOfMonth)
+}
 
 
 fun getRandomQuote(context: Context): String {

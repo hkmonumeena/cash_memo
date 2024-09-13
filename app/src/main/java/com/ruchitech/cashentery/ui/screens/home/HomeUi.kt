@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.home
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,7 +22,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,9 +60,14 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.R
+import com.ruchitech.cashentery.WebViewActivity
 import com.ruchitech.cashentery.helper.RequestState
+import com.ruchitech.cashentery.helper.privacyPolicy
+import com.ruchitech.cashentery.helper.termsAndCond
 import com.ruchitech.cashentery.retrofit.model.Tags
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import com.ruchitech.cashentery.ui.screens.common_ui.BottomMenu
+import com.ruchitech.cashentery.ui.screens.common_ui.DeleteAccountConfirmationDialog
 import com.ruchitech.cashentery.ui.screens.common_ui.EmptyTransactionUi
 import com.ruchitech.cashentery.ui.screens.common_ui.MultiSelectStatus
 import com.ruchitech.cashentery.ui.screens.common_ui.MultiSelectType
@@ -74,7 +80,6 @@ import com.ruchitech.cashentery.ui.screens.common_ui.TagSelectionChips
 import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusTable
 import com.ruchitech.cashentery.ui.screens.common_ui.VerticalMoneyRangeSlider
 import com.ruchitech.cashentery.ui.screens.transactions.FilterTrnx
-import com.ruchitech.cashentery.ui.screens.transactions.TransactionItem
 import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
@@ -120,6 +125,7 @@ fun HomeUi(
     val context = LocalContext.current
     (context as MainActivity).lastTagUsed = ""
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var selectedStatus by rememberSaveable { mutableStateOf<Transaction.Status?>(null) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
@@ -127,7 +133,9 @@ fun HomeUi(
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
     val trnxFilteredData by viewModel.filterTrnx.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetStateBottomMenu = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     var showBottomSheet by remember { mutableStateOf(false) }
+    var showBottomMenuSheet by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf("Account") }
     var dateRangePickerShow by remember { mutableStateOf(true) }
     var startDate by rememberSaveable { mutableStateOf("") }
@@ -192,26 +200,18 @@ fun HomeUi(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Cash Entry",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp.nonScaledSp
-                )
-                Row(horizontalArrangement = Arrangement.End) {
-                    /*      IconButton(onClick = { viewModel.updateData() }) {
-                              Icon(
-                                  imageVector = Icons.Outlined.Refresh,
-                                  contentDescription = "Refresh"
-                              )
-                          }*/
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = {
-                        showDeleteDialog = true
+                        showBottomMenuSheet = true
                     }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ExitToApp,
-                            contentDescription = "Sign out"
-                        )
+                        Icon(imageVector = Icons.Filled.Menu, contentDescription = null)
                     }
+
+                    Text(
+                        text = "Cash Entry",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp.nonScaledSp
+                    )
                 }
             }
         },
@@ -226,6 +226,20 @@ fun HomeUi(
                     },
                     onCancel = {
                         showDeleteDialog = false
+                    }
+                )
+            }
+
+            if (showDeleteAccountDialog) {
+                DeleteAccountConfirmationDialog(
+                    onConfirm = {
+                        showDeleteAccountDialog = false
+                        viewModel.deleteAccount {
+                            onSignOut()
+                        }
+                    },
+                    onCancel = {
+                        showDeleteAccountDialog = false
                     }
                 )
             }
@@ -306,7 +320,7 @@ fun HomeUi(
                                 fontSize = 14.sp.nonScaledSp
                             )
 
-                            Box(modifier = Modifier.clickable { showBottomSheet = true}) {
+                            Box(modifier = Modifier.clickable { showBottomSheet = true }) {
                                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(
                                         text = if (isFilteredData) "Filtered" else "", // Display the selected filter
@@ -325,15 +339,15 @@ fun HomeUi(
                                 }
                             }
                         }
-/*
-                        FilterRow(
-                            transactionFilters = transactionFilters,
-                            selectedStatus = selectedStatus,
-                            onStatusSelected = { newStatus ->
-                                selectedStatus = newStatus
-                            }
-                        )
-*/
+                        /*
+                                                FilterRow(
+                                                    transactionFilters = transactionFilters,
+                                                    selectedStatus = selectedStatus,
+                                                    onStatusSelected = { newStatus ->
+                                                        selectedStatus = newStatus
+                                                    }
+                                                )
+                        */
                         Spacer(modifier = Modifier.height(8.dp))
                         TransactionList(transactions = tags, onClick = {
                             navigateToDetails(it)
@@ -349,7 +363,8 @@ fun HomeUi(
                             Box(
                                 Modifier
                                     .fillMaxWidth()
-                                    .background(MainBackgroundSurface), contentAlignment = Alignment.Center
+                                    .background(MainBackgroundSurface),
+                                contentAlignment = Alignment.Center
                             ) {
                                 BottomSheetDefaults.DragHandle()
                                 HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
@@ -389,7 +404,14 @@ fun HomeUi(
                                     ) {
                                         // List of sort options
                                         val options =
-                                            listOf("Account", "Date", "Status", "Type", "Amount", "Tag")
+                                            listOf(
+                                                "Account",
+                                                "Date",
+                                                "Status",
+                                                "Type",
+                                                "Amount",
+                                                "Tag"
+                                            )
 
                                         // Iterate through the options and create a Box for each one
                                         options.forEach { option ->
@@ -478,11 +500,12 @@ fun HomeUi(
                                             "Type" -> {
                                                 MultiSelectType(selectedTypes = selectedTypes,
                                                     onTypeSelected = { type ->
-                                                        selectedTypes = if (selectedTypes.contains(type)) {
-                                                            selectedTypes - type
-                                                        } else {
-                                                            selectedTypes + type
-                                                        }
+                                                        selectedTypes =
+                                                            if (selectedTypes.contains(type)) {
+                                                                selectedTypes - type
+                                                            } else {
+                                                                selectedTypes + type
+                                                            }
                                                     })
                                             }
 
@@ -561,7 +584,8 @@ fun HomeUi(
                                     Button(
                                         onClick = {
                                             val tempData = trnxFilteredData
-                                            tempData.date = FilterTrnx.Date(start = startDate, end = endDate)
+                                            tempData.date =
+                                                FilterTrnx.Date(start = startDate, end = endDate)
                                             tempData.status = selectedStatuses
                                             tempData.type = selectedTypes
                                             tempData.account = selectedAccounts
@@ -595,6 +619,36 @@ fun HomeUi(
                     }
                 }
 
+                if (showBottomMenuSheet) {
+                    BottomMenu(sheetState = sheetStateBottomMenu, onDismissRequest = {
+                        showBottomMenuSheet = false
+                    }) {
+                        when (it) {
+                            "Profile" -> {}
+                            "Terms and Conditions" -> {
+                                val intent = Intent(context, WebViewActivity::class.java)
+                                intent.putExtra("url", termsAndCond)
+                                intent.putExtra("type", "Terms & Conditions")
+                                context.startActivity(intent)
+                            }
+
+                            "Privacy Policy" -> {
+                                val intent = Intent(context, WebViewActivity::class.java)
+                                intent.putExtra("url", privacyPolicy)
+                                intent.putExtra("type", "Privacy Policy")
+                                context.startActivity(intent)
+                            }
+
+                            "Sign Out" -> {
+                                showDeleteDialog = true
+                            }
+
+                            "Delete Account" -> {
+                                showDeleteAccountDialog = true
+                            }
+                        }
+                    }
+                }
             }
         })
 }

@@ -19,7 +19,7 @@ data class FilterTrnx(
     )
 
     data class Date(
-        val end: String, // 2024-07-31
-        val start: String // 2024-07-31
+        var end: String, // 2024-07-31
+        var start: String // 2024-07-31
     )
 }

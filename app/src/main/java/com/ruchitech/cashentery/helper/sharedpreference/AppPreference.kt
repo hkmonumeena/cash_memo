@@ -9,6 +9,7 @@ class AppPreference(context: Context) : PreferenceConfig(context) {
     companion object {
         private const val USER_ID = "userId"
         private const val IS_LOGIN = "isUserLoggedIn"
+        private const val MOBILE = "mobile_number"
         private const val PASSWORD = "password"
         private const val CATEGORIES = "CATEGOROIES"
     }
@@ -20,6 +21,10 @@ class AppPreference(context: Context) : PreferenceConfig(context) {
     var userId: String?
         get() = getPreference(USER_ID, PrefConfig.StringValue())
         set(value) = setPreference(USER_ID, PrefConfig.StringValue(value))
+
+    var mobileNumber: String?
+        get() = getPreference(MOBILE, PrefConfig.StringValue())
+        set(value) = setPreference(MOBILE, PrefConfig.StringValue(value))
 
     var password: String?
         get() = getPreference(PASSWORD, PrefConfig.StringValue())
