@@ -2,6 +2,12 @@ package com.ruchitech.cashentery.ui.screens.home
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,9 +35,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -48,6 +56,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -62,6 +73,7 @@ import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.WebViewActivity
 import com.ruchitech.cashentery.helper.RequestState
+import com.ruchitech.cashentery.helper.generateContrastColorForWhiteText
 import com.ruchitech.cashentery.helper.privacyPolicy
 import com.ruchitech.cashentery.helper.termsAndCond
 import com.ruchitech.cashentery.retrofit.model.Tags
@@ -84,6 +96,7 @@ import com.ruchitech.cashentery.ui.theme.Expense
 import com.ruchitech.cashentery.ui.theme.Income
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.nonScaledSp
+import com.ruchitech.cashentery.ui.theme.sfSemibold
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -112,13 +125,15 @@ fun formatDateTime(originalDateString: String): String {
 @Composable
 fun HomeUi(
     viewModel: HomeViewModel = viewModel(),
-    navigateToAddTransaction: () -> Unit,
+    navigateToAddTransaction: (type: Int) -> Unit,
     navigateToTransactions: () -> Unit,
     navigateToDetails: (tagName: String) -> Unit,
+    navigateToSettings: () -> Unit,
     onSignOut: () -> Unit,
 ) {
     val data by viewModel.data.collectAsState(initial = RequestState.Idle)
     val transactions by viewModel.groupByTag.collectAsState()
+    val userData by viewModel.userData.collectAsState()
     val isLoading by viewModel.circularLoadingIndicator.collectAsState()
     val tags by viewModel.trxnTags.collectAsState()
     val trxnSummary by viewModel.trnxSummary.collectAsState()
@@ -208,7 +223,7 @@ fun HomeUi(
                     }
 
                     Text(
-                        text = "Cash Entry",
+                        text = userData?.name ?: "Cash Entry",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp.nonScaledSp
                     )
@@ -257,401 +272,560 @@ fun HomeUi(
                     }
                 }
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MainBackgroundSurface)
-                        .padding(padding)
-                ) {
-                    if (isLoading) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 10.dp)
-                        ) {
-                            SumCountCard(
-                                Modifier.weight(1f),
-                                "Received",
-                                Color(0xFFDBF5DB),
-                                Color(0xFF228B22),
-                                130f,
-                                trxnSummary?.totalCredits ?: 0.0
-                            ) {
-                                navigateToTransactions()
-                            }
-                            SumCountCard(
-                                Modifier.weight(1f),
-                                "Paid",
-                                Color(0xFFFEECEC),
-                                Color(0xFFB22222),
-                                320f,
-                                trxnSummary?.totalDebits ?: 0.0
-                            ) {
-                                navigateToTransactions()
-                            }
-                        }
-                        TransactionStatusTable(
-                            creditPending = trxnSummary?.creditsByStatus?.PENDING ?: 0.0,
-                            creditCleared = trxnSummary?.creditsByStatus?.CLEARED ?: 0.0,
-                            creditOverdue = trxnSummary?.creditsByStatus?.OVERDUE ?: 0.0,
-                            creditVoid = trxnSummary?.creditsByStatus?.VOID ?: 0.0,
-                            debtPending = trxnSummary?.debitsByStatus?.PENDING ?: 0.0,
-                            debtCleared = trxnSummary?.debitsByStatus?.CLEARED ?: 0.0,
-                            debtOverdue = trxnSummary?.debitsByStatus?.OVERDUE ?: 0.0,
-                            debtVoid = trxnSummary?.debitsByStatus?.VOID ?: 0.0,
-                        )
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 10.dp, horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Tags (${tags?.size})",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp.nonScaledSp
-                            )
-
-                            Box(modifier = Modifier.clickable { showBottomSheet = true }) {
-                                Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(
-                                        text = if (isFilteredData) "Filtered" else "", // Display the selected filter
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp.nonScaledSp,
-                                        color = Color.Gray,
-                                        modifier = Modifier.align(Alignment.CenterVertically)
-                                    )
-                                    SpacerWidth(8)
-                                    Image(
-                                        painterResource(id = R.drawable.ic_filter),
-                                        contentDescription = "Date Range",
-                                        modifier = Modifier
-                                            .size(25.dp)
-                                    )
-                                }
-                            }
-                        }
-                        /*
-                                                FilterRow(
-                                                    transactionFilters = transactionFilters,
-                                                    selectedStatus = selectedStatus,
-                                                    onStatusSelected = { newStatus ->
-                                                        selectedStatus = newStatus
-                                                    }
-                                                )
-                        */
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TransactionList(transactions = tags, onClick = {
-                            navigateToDetails(it)
-                        })
-                    }
-                }
-                if (showBottomSheet) {
-                    ModalBottomSheet(
-                        onDismissRequest = {
-                            showBottomSheet = false
-                        }, sheetState = sheetState,
-                        dragHandle = {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MainBackgroundSurface)
+                            .padding(padding)
+                    ) {
+                        if (isLoading) {
                             Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .background(MainBackgroundSurface),
+                                modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                BottomSheetDefaults.DragHandle()
-                                HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
+                                CircularProgressIndicator()
                             }
-                        }
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxSize(0.8F)
-                        ) {
-                            Column(
+                        } else {
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(MainBackgroundSurface)
+                                    .padding(horizontal = 10.dp)
+                            ) {
+                                SumCountCard(
+                                    Modifier.weight(1f),
+                                    "Received",
+                                    Color(0xFFDBF5DB),
+                                    Color(0xFF228B22),
+                                    130f,
+                                    trxnSummary?.totalCredits ?: 0.0
+                                ) {
+                                    navigateToTransactions()
+                                }
+                                SumCountCard(
+                                    Modifier.weight(1f),
+                                    "Paid",
+                                    Color(0xFFFEECEC),
+                                    Color(0xFFB22222),
+                                    320f,
+                                    trxnSummary?.totalDebits ?: 0.0
+                                ) {
+                                    navigateToTransactions()
+                                }
+                            }
+                            TransactionStatusTable(
+                                creditPending = trxnSummary?.creditsByStatus?.SWAP ?: 0.0,
+                                creditCleared = trxnSummary?.creditsByStatus?.CLEARED ?: 0.0,
+                                creditOverdue = trxnSummary?.creditsByStatus?.OVERDUE ?: 0.0,
+                                creditVoid = trxnSummary?.creditsByStatus?.VOID ?: 0.0,
+                                debtPending = trxnSummary?.debitsByStatus?.SWAP ?: 0.0,
+                                debtCleared = trxnSummary?.debitsByStatus?.CLEARED ?: 0.0,
+                                debtOverdue = trxnSummary?.debitsByStatus?.OVERDUE ?: 0.0,
+                                debtVoid = trxnSummary?.debitsByStatus?.VOID ?: 0.0,
+                            )
 
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp, horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Sort",
+                                    text = "Tags (${tags?.size?:0})",
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp.nonScaledSp,
-                                    modifier = Modifier.padding(start = 16.dp, top = 5.dp)
+                                    fontSize = 14.sp.nonScaledSp
                                 )
-                                SpacerHeight(8)
-                                HorizontalDivider()
-                                Row(
+
+                                Box(modifier = Modifier.clickable { showBottomSheet = true }) {
+                                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(
+                                            text = if (isFilteredData) "Filtered" else "", // Display the selected filter
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp.nonScaledSp,
+                                            color = Color.Gray,
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                        SpacerWidth(8)
+                                        Image(
+                                            painterResource(id = R.drawable.ic_filter),
+                                            contentDescription = "Date Range",
+                                            modifier = Modifier
+                                                .size(25.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            /*
+                                                    FilterRow(
+                                                        transactionFilters = transactionFilters,
+                                                        selectedStatus = selectedStatus,
+                                                        onStatusSelected = { newStatus ->
+                                                            selectedStatus = newStatus
+                                                        }
+                                                    )
+                            */
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TransactionList(transactions = tags, onClick = {
+                                navigateToDetails(it)
+                            })
+                        }
+                    }
+                    if (showBottomSheet) {
+                        ModalBottomSheet(
+                            onDismissRequest = {
+                                showBottomSheet = false
+                            }, sheetState = sheetState,
+                            dragHandle = {
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .background(MainBackgroundSurface),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    BottomSheetDefaults.DragHandle()
+                                    HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
+                                }
+                            }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxSize(0.8F)
+                            ) {
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(MainBackgroundSurface)
-                                        .padding(bottom = 58.dp)
+
                                 ) {
-                                    Column(
+                                    Text(
+                                        text = "Sort",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp.nonScaledSp,
+                                        modifier = Modifier.padding(start = 16.dp, top = 5.dp)
+                                    )
+                                    SpacerHeight(8)
+                                    HorizontalDivider()
+                                    Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .weight(0.35F)
-                                            .padding(top = 0.dp)
-                                    ) {
-                                        // List of sort options
-                                        val options =
-                                            listOf(
-                                                "Account",
-                                                "Date",
-                                                "Status",
-                                                "Type",
-                                                "Amount",
-                                                "Tag"
-                                            )
-
-                                        // Iterate through the options and create a Box for each one
-                                        options.forEach { option ->
-                                            val isSelected = selectedOption == option
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(45.dp)
-                                                    .background(
-                                                        if (isSelected) Color(0xFFDACB9F) else MainBackgroundSurface
-                                                    )
-                                                    .clickable { selectedOption = option },
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = option,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.sp.nonScaledSp,
-                                                    modifier = Modifier
-                                                )
-                                                HorizontalDivider(
-                                                    modifier = Modifier
-                                                        .align(Alignment.BottomCenter)
-                                                        .fillMaxWidth()
-                                                )
-                                            }
-                                        }
-                                    }
-                                    VerticalDivider()
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .weight(1F)
                                             .background(MainBackgroundSurface)
-
+                                            .padding(bottom = 58.dp)
                                     ) {
-                                        when (selectedOption) {
-                                            "Account" -> {
-                                                PaymentTypeSelection(selectedOptions = selectedAccounts,
-                                                    onSelectionChange = { newSelection ->
-                                                        selectedAccounts = newSelection
-                                                        // Handle the new selection
-                                                    })
-                                            }
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(0.35F)
+                                                .padding(top = 0.dp)
+                                        ) {
+                                            // List of sort options
+                                            val options =
+                                                listOf(
+                                                    "Account",
+                                                    "Date",
+                                                    "Status",
+                                                    "Type",
+                                                    "Amount",
+                                                    "Tag"
+                                                )
 
-                                            "Date" -> {
-                                                if (dateRangePickerShow) {
-                                                    Log.e(
-                                                        "yrdhgftghr",
-                                                        "TransactionUi: $startDate -> $date1Temp"
+                                            // Iterate through the options and create a Box for each one
+                                            options.forEach { option ->
+                                                val isSelected = selectedOption == option
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(45.dp)
+                                                        .background(
+                                                            if (isSelected) Color(0xFFDACB9F) else MainBackgroundSurface
+                                                        )
+                                                        .clickable { selectedOption = option },
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = option,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp.nonScaledSp,
+                                                        modifier = Modifier
                                                     )
-                                                    SampleDatePickerView(
-                                                        dates = { date1, date2, date1L, date2L ->
-                                                            dateRangePickerShow = true
-                                                            Log.e(
-                                                                "hfhgfhgfhfg",
-                                                                "TransactionUi: $date1 -> $date1L"
-                                                            )
-                                                            startDate = date1
-                                                            endDate = date2
-                                                            date1Temp = date1L.toString()
-                                                            date2Temp = date2L.toString()
-                                                        },
-                                                        onDismissRequest = {
-                                                            dateRangePickerShow = true
-                                                        },
-                                                        initialSelectedStartDateMillis = if (date1Temp.isNotEmpty()) date1Temp.toLong() else null,
-                                                        initialSelectedEndDateMillis = if (date2Temp.isNotEmpty()) date2Temp.toLong() else null
+                                                    HorizontalDivider(
+                                                        modifier = Modifier
+                                                            .align(Alignment.BottomCenter)
+                                                            .fillMaxWidth()
                                                     )
                                                 }
                                             }
+                                        }
+                                        VerticalDivider()
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1F)
+                                                .background(MainBackgroundSurface)
 
-                                            "Status" -> {
-                                                MultiSelectStatus(selectedStatuses = selectedStatuses,
-                                                    onStatusSelected = { status ->
-                                                        selectedStatuses =
-                                                            if (selectedStatuses.contains(status)) {
-                                                                selectedStatuses - status
-                                                            } else {
-                                                                selectedStatuses + status
-                                                            }
-                                                    })
+                                        ) {
+                                            when (selectedOption) {
+                                                "Account" -> {
+                                                    PaymentTypeSelection(selectedOptions = selectedAccounts,
+                                                        onSelectionChange = { newSelection ->
+                                                            selectedAccounts = newSelection
+                                                            // Handle the new selection
+                                                        })
+                                                }
 
-                                            }
+                                                "Date" -> {
+                                                    if (dateRangePickerShow) {
+                                                        Log.e(
+                                                            "yrdhgftghr",
+                                                            "TransactionUi: $startDate -> $date1Temp"
+                                                        )
+                                                        SampleDatePickerView(
+                                                            dates = { date1, date2, date1L, date2L ->
+                                                                dateRangePickerShow = true
+                                                                Log.e(
+                                                                    "hfhgfhgfhfg",
+                                                                    "TransactionUi: $date1 -> $date1L"
+                                                                )
+                                                                startDate = date1
+                                                                endDate = date2
+                                                                date1Temp = date1L.toString()
+                                                                date2Temp = date2L.toString()
+                                                            },
+                                                            onDismissRequest = {
+                                                                dateRangePickerShow = true
+                                                            },
+                                                            initialSelectedStartDateMillis = if (date1Temp.isNotEmpty()) date1Temp.toLong() else null,
+                                                            initialSelectedEndDateMillis = if (date2Temp.isNotEmpty()) date2Temp.toLong() else null
+                                                        )
+                                                    }
+                                                }
 
-                                            "Type" -> {
-                                                MultiSelectType(selectedTypes = selectedTypes,
-                                                    onTypeSelected = { type ->
-                                                        selectedTypes =
-                                                            if (selectedTypes.contains(type)) {
-                                                                selectedTypes - type
-                                                            } else {
-                                                                selectedTypes + type
-                                                            }
-                                                    })
-                                            }
+                                                "Status" -> {
+                                                    MultiSelectStatus(selectedStatuses = selectedStatuses,
+                                                        onStatusSelected = { status ->
+                                                            selectedStatuses =
+                                                                if (selectedStatuses.contains(status)) {
+                                                                    selectedStatuses - status
+                                                                } else {
+                                                                    selectedStatuses + status
+                                                                }
+                                                        })
 
-                                            "Amount" -> {
-                                                VerticalMoneyRangeSlider(range = selectedRange,
-                                                    onRangeChange = { newRange ->
-                                                        selectedRange = newRange
-                                                    })
-                                            }
+                                                }
 
-                                            "Tag" -> {
-                                                TagSelectionChips(availableTags = tagsData,
-                                                    selectedTags = selectedTags,
-                                                    onTagSelectionChange = { newSelection ->
-                                                        selectedTags = newSelection
-                                                        // Handle the updated selection
-                                                    })
+                                                "Type" -> {
+                                                    MultiSelectType(selectedTypes = selectedTypes,
+                                                        onTypeSelected = { type ->
+                                                            selectedTypes =
+                                                                if (selectedTypes.contains(type)) {
+                                                                    selectedTypes - type
+                                                                } else {
+                                                                    selectedTypes + type
+                                                                }
+                                                        })
+                                                }
+
+                                                "Amount" -> {
+                                                    VerticalMoneyRangeSlider(range = selectedRange,
+                                                        onRangeChange = { newRange ->
+                                                            selectedRange = newRange
+                                                        })
+                                                }
+
+                                                "Tag" -> {
+                                                    TagSelectionChips(availableTags = tagsData,
+                                                        selectedTags = selectedTags,
+                                                        onTagSelectionChange = { newSelection ->
+                                                            selectedTags = newSelection
+                                                            // Handle the updated selection
+                                                        })
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .align(Alignment.BottomCenter),
-                            ) {
-                                HorizontalDivider()
-                                SpacerHeight(10)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Absolute.Center
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.BottomCenter),
                                 ) {
-                                    TextButton(onClick = {
-                                        showBottomSheet = false
-                                        val data = FilterTrnx(
-                                            account = listOf(),
-                                            amount = FilterTrnx.Amount(
-                                                max = 100000.0, min = 0.0
-                                            ),
-                                            authId = "",
-                                            date = FilterTrnx.Date(
-                                                end = "", start = ""
-                                            ),
-                                            limit = 100,
-                                            page = 1,
-                                            status = listOf(),
-                                            tag = listOf(),
-                                            type = listOf()
-                                        )
-
-                                        startDate = ""
-                                        endDate = ""
-                                        selectedStatuses = listOf()
-                                        selectedTypes = listOf()
-                                        selectedAccounts = listOf()
-                                        selectedRange = 0f..100000f
-                                        selectedTags = listOf()
-                                        date1Temp = ""
-                                        date2Temp = ""
-                                        viewModel.getFilteredTransactions(data)
-                                        isFilteredData = false
-
-                                    }, modifier = Modifier.weight(0.4F)) {
-                                        Text(
-                                            text = "Clear All",
-                                            color = Color.Red,
-                                            fontWeight = FontWeight.Bold,
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 16.sp.nonScaledSp
-                                        )
-                                    }
-
-                                    SpacerWidth(16)
-
-                                    Button(
-                                        onClick = {
-                                            val tempData = trnxFilteredData
-                                            tempData.date =
-                                                FilterTrnx.Date(start = startDate, end = endDate)
-                                            tempData.status = selectedStatuses
-                                            tempData.type = selectedTypes
-                                            tempData.account = selectedAccounts
-                                            tempData.tag = selectedTags
-                                            tempData.amount = FilterTrnx.Amount(
-                                                min = selectedRange.start.toDouble(),
-                                                max = selectedRange.endInclusive.toDouble()
-                                            )
-                                            viewModel.getFilteredTransactions(tempData)
-                                            showBottomSheet = false
-                                            isFilteredData = true
-                                        },
-                                        modifier = Modifier
-                                            .weight(1F)
-                                            .padding(horizontal = 10.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                                        shape = RoundedCornerShape(5.dp)
+                                    HorizontalDivider()
+                                    SpacerHeight(10)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Absolute.Center
                                     ) {
-                                        Text(
-                                            text = "Apply",
-                                            color = Color.White,
-                                            fontSize = 16.sp.nonScaledSp,
-                                            modifier = Modifier.padding(vertical = 5.dp)
-                                        )
+                                        TextButton(onClick = {
+                                            showBottomSheet = false
+                                            val data = FilterTrnx(
+                                                account = listOf(),
+                                                amount = FilterTrnx.Amount(
+                                                    max = 100000.0, min = 0.0
+                                                ),
+                                                authId = "",
+                                                date = FilterTrnx.Date(
+                                                    end = "", start = ""
+                                                ),
+                                                limit = 100,
+                                                page = 1,
+                                                status = listOf(),
+                                                tag = listOf(),
+                                                type = listOf()
+                                            )
+
+                                            startDate = ""
+                                            endDate = ""
+                                            selectedStatuses = listOf()
+                                            selectedTypes = listOf()
+                                            selectedAccounts = listOf()
+                                            selectedRange = 0f..100000f
+                                            selectedTags = listOf()
+                                            date1Temp = ""
+                                            date2Temp = ""
+                                            viewModel.getFilteredTransactions(data)
+                                            isFilteredData = false
+
+                                        }, modifier = Modifier.weight(0.4F)) {
+                                            Text(
+                                                text = "Clear All",
+                                                color = Color.Red,
+                                                fontWeight = FontWeight.Bold,
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 16.sp.nonScaledSp
+                                            )
+                                        }
+
+                                        SpacerWidth(16)
+
+                                        Button(
+                                            onClick = {
+                                                val tempData = trnxFilteredData
+                                                tempData.date =
+                                                    FilterTrnx.Date(
+                                                        start = startDate,
+                                                        end = endDate
+                                                    )
+                                                tempData.status = selectedStatuses
+                                                tempData.type = selectedTypes
+                                                tempData.account = selectedAccounts
+                                                tempData.tag = selectedTags
+                                                tempData.amount = FilterTrnx.Amount(
+                                                    min = selectedRange.start.toDouble(),
+                                                    max = selectedRange.endInclusive.toDouble()
+                                                )
+                                                viewModel.getFilteredTransactions(tempData)
+                                                showBottomSheet = false
+                                                isFilteredData = true
+                                            },
+                                            modifier = Modifier
+                                                .weight(1F)
+                                                .padding(horizontal = 10.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                                            shape = RoundedCornerShape(5.dp)
+                                        ) {
+                                            Text(
+                                                text = "Apply",
+                                                color = Color.White,
+                                                fontSize = 16.sp.nonScaledSp,
+                                                modifier = Modifier.padding(vertical = 5.dp)
+                                            )
+                                        }
                                     }
+                                    SpacerHeight(10)
                                 }
-                                SpacerHeight(10)
-                            }
 
-                        }
-                    }
-                }
-
-                if (showBottomMenuSheet) {
-                    BottomMenu(sheetState = sheetStateBottomMenu, onDismissRequest = {
-                        showBottomMenuSheet = false
-                    }) {
-                        when (it) {
-                            "Profile" -> {}
-                            "Terms and Conditions" -> {
-                                val intent = Intent(context, WebViewActivity::class.java)
-                                intent.putExtra("url", termsAndCond)
-                                intent.putExtra("type", "Terms & Conditions")
-                                context.startActivity(intent)
-                            }
-
-                            "Privacy Policy" -> {
-                                val intent = Intent(context, WebViewActivity::class.java)
-                                intent.putExtra("url", privacyPolicy)
-                                intent.putExtra("type", "Privacy Policy")
-                                context.startActivity(intent)
-                            }
-
-                            "Sign Out" -> {
-                                showDeleteDialog = true
-                            }
-
-                            "Delete Account" -> {
-                                showDeleteAccountDialog = true
                             }
                         }
                     }
+
+                    if (showBottomMenuSheet) {
+                        BottomMenu(sheetState = sheetStateBottomMenu, onDismissRequest = {
+                            showBottomMenuSheet = false
+                        }) {
+                            showBottomMenuSheet = false
+                            when (it) {
+                                "Profile" -> {}
+                                "Settings" -> {
+                                    navigateToSettings()
+                                }
+
+                                "Terms and Conditions" -> {
+                                    val intent = Intent(context, WebViewActivity::class.java)
+                                    intent.putExtra("url", termsAndCond)
+                                    intent.putExtra("type", "Terms & Conditions")
+                                    context.startActivity(intent)
+                                }
+
+                                "Privacy Policy" -> {
+                                    val intent = Intent(context, WebViewActivity::class.java)
+                                    intent.putExtra("url", privacyPolicy)
+                                    intent.putExtra("type", "Privacy Policy")
+                                    context.startActivity(intent)
+                                }
+
+                                "Sign Out" -> {
+                                    showDeleteDialog = true
+                                }
+
+                                "Delete Account" -> {
+                                    showDeleteAccountDialog = true
+                                }
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 2.dp)
+                            .padding(bottom = 16.dp)
+                            .height(60.dp)
+                            .align(Alignment.BottomCenter),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Box(modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f)
+                            .padding(4.dp)){
+                            ShimmerButtonContent(text = "Receive Payment", backgroundColor = Income, onClick = {
+                                navigateToAddTransaction(1)
+                            })
+                        }
+
+
+/*
+                        FilledTonalButton(
+                            onClick = { navigateToAddTransaction(1) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Income),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .weight(1f)
+                                .padding(5.dp)
+                        ) {
+                            Text(text = "Receive Payment", fontFamily = sfSemibold)
+                        }
+*/
+                        SpacerWidth(2)
+                        IconButton(
+                            onClick = { showBottomMenuSheet = true },
+                            modifier = Modifier
+                                .size(56.dp)
+                                .background(color = Color.Transparent, shape = CircleShape),
+                            colors = IconButtonDefaults.iconButtonColors(containerColor = Color.DarkGray)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                        SpacerWidth(2)
+                        Box(modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f)
+                            .padding(4.dp)){
+                            ShimmerButtonContent(text = "Send Payment", backgroundColor = Expense, onClick = {
+                                navigateToAddTransaction(2)
+                            })
+                        }
+/*
+                        FilledTonalButton(
+                            onClick = { navigateToAddTransaction(2) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Expense),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .weight(1f)
+                                .padding(5.dp)
+                        ) {
+                            Text(
+                                text = "Send Payment",
+                                color = Color.White,
+                                fontFamily = sfSemibold
+                            )
+                        }
+*/
+
+                    }
+
                 }
             }
         })
 }
+
+
+@Composable
+fun ShimmerButtonContent(text:String,backgroundColor: Color,onClick: () -> Unit) {
+    // Animate the shimmer colors
+    val shimmerColors = listOf(
+        Color.LightGray.copy(alpha = 0.0f),
+        Color.White.copy(alpha = 0.2f),
+        Color.LightGray.copy(alpha = 0.0f)
+    )
+
+    val transition = rememberInfiniteTransition()
+
+    // Shimmer animation
+    val translateAnim = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    // Determine the shimmer direction based on the text value
+    val (startOffset, endOffset) = if (text == "Receive Payment") {
+        // Shimmer from left to right
+        Offset(x = translateAnim.value - 200, y = 0f) to Offset(x = translateAnim.value, y = 0f)
+    } else {
+        // Shimmer from right to left
+        Offset(x = 1000f - translateAnim.value, y = 0f) to Offset(x = 800f - translateAnim.value, y = 0f)
+    }
+
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start = startOffset,
+        end = endOffset
+    )
+
+    // The button with shimmer effect and background color
+    ShimmerButton(brush, backgroundColor,text,onClick)
+}
+
+@Composable
+fun ShimmerButton(brush: Brush, backgroundColor: Color, text: String,onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+    ) {
+        // Apply the background color
+        FilledTonalButton(
+            onClick = { onClick() },
+            colors = ButtonDefaults.buttonColors(containerColor = backgroundColor),
+            modifier = Modifier
+                .matchParentSize() // Ensure the button covers the entire box
+        ) {
+            Text(
+                fontSize = 13.sp.nonScaledSp,
+                text = text,
+                fontFamily = sfSemibold,
+                color = Color.White // Ensure the text is visible on the green background
+            )
+        }
+
+        // Overlay the shimmer effect
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(brush = brush, shape = RoundedCornerShape(12.dp)) // Apply shimmer brush
+                .clip(RoundedCornerShape(12.dp)) // Ensure shimmer follows button shape
+        )
+    }
+}
+
 
 @Composable
 fun TransactionList(
@@ -681,7 +855,7 @@ private fun TransactionItem(
     transaction: Tags.TagsItem,
     onClick: () -> Unit,
 ) {
-
+    val randomColor = remember { generateContrastColorForWhiteText() } // Random translucent color
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -702,7 +876,7 @@ private fun TransactionItem(
                     .padding(top = 10.dp)
                     .size(25.dp)
                     .background(
-                        color = Color(0xFFBBA76D),
+                        color = randomColor,
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -734,10 +908,11 @@ private fun TransactionItem(
 
         Column(horizontalAlignment = Alignment.End) {
             //val netBalance = calculateNetBalance(u)
+            val calculateNetBalance = transaction.totalCreditAmount + transaction.totalDebitAmount
             Text(
-                text = formatToINR(transaction.balance),
-                fontWeight = FontWeight.Bold,
+                text = formatToINR(calculateNetBalance),
                 fontSize = 14.sp.nonScaledSp,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(end = 10.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))

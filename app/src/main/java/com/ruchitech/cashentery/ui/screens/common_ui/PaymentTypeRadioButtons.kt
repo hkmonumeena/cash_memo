@@ -15,8 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
 @Composable
 fun PaymentTypeSelection(
@@ -59,6 +61,7 @@ fun PaymentTypeSelection(
                 )
                 Text(
                     text = option.name,
+                    fontSize = 14.sp.nonScaledSp,
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }

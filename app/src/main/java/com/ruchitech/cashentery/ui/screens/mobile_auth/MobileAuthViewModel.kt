@@ -34,6 +34,10 @@ class MobileAuthViewModel @Inject constructor(
     var mobileNumber = mutableStateOf("")
     val filledOtp = mutableStateOf("")
 
+
+
+
+
 fun changeState(){
     _authState.value = AuthState.Idle
 }

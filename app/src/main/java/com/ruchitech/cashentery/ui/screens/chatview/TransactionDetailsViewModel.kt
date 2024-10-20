@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.chatview
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
@@ -12,6 +13,7 @@ import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.helper.toast.MyToast
 import com.ruchitech.cashentery.retrofit.model.TransactionsBytag
+import com.ruchitech.cashentery.retrofit.model.UpdateTag
 import com.ruchitech.cashentery.retrofit.remote.Status
 import com.ruchitech.cashentery.retrofit.repository.AccountRepository
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
@@ -36,6 +38,7 @@ class TransactionDetailsViewModel @Inject constructor(
     val categories: StateFlow<List<String>> = _categories
     val showLoading = mutableStateOf(false)
     val selectedTag = mutableStateOf("")
+    val userData = mutableStateOf(appPreference.userData)
     private val db = FirebaseFirestore.getInstance()
 
     private val _result = MutableStateFlow<Result?>(null)
@@ -107,6 +110,37 @@ class TransactionDetailsViewModel @Inject constructor(
                 }
         }
     }
+
+    fun updateTag(updatedTag: UpdateTag) {
+        val dataToSend = updatedTag.copy(authId = appPreference.userId ?: "")
+        viewModelScope.launch {
+            accountRepository.updateTag(dataToSend)
+                .distinctUntilChanged()
+                .collectLatest { resources ->
+                    when (resources.status) {
+                        Status.INITIAL -> Unit
+                        Status.EMPTY -> Unit
+                        Status.SUCCESS -> {
+                            showLoading.value = false
+                            myToast.showToast(resources.data?.message?:"Tag updated successfully")
+                            getData(updatedTag.newTagName)
+                            EventEmitter postEvent Event.HomeViewModel(
+                                deleteId = null,
+                                transaction = null,
+                                refreshPage = true
+                            )
+                        }
+
+                        Status.ERROR -> {
+                            showLoading.value = false
+                        }
+
+                        Status.LOADING -> showLoading.value = true
+                    }
+                }
+        }
+    }
+
 
     fun getData(tag: String) {
         selectedTag.value = tag

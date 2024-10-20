@@ -10,6 +10,8 @@ data class TransactionsBytag(
         val creditCleared: Double?, // 0
         val creditOverdue: Double?, // 3100
         val creditPending: Double?, // 0
+        val creditSwap: Double?, // 0
+        val debitSwap: Double?, // 0
         val creditVoid: Double?, // 0
         val debitCleared: Double?, // 0
         val debitOverdue: Double?, // 0

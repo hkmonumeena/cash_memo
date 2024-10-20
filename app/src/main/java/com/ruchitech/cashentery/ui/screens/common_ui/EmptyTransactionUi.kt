@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
 @Composable
 fun EmptyTransactionUi() {
@@ -41,14 +42,14 @@ fun EmptyTransactionUi() {
             Text(
                 text = "No transactions available",
                 color = Color.Gray,
-                fontSize = 18.sp,
+                fontSize = 16.sp.nonScaledSp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Try adding some transactions",
                 color = Color.Gray,
-                fontSize = 14.sp
+                fontSize = 14.sp.nonScaledSp,
             )
         }
     }

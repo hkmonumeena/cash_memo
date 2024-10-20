@@ -2,6 +2,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 /*
+26903312
 Alias name: alias
         Creation date: 31 Jul, 2024
 Entry type: PrivateKeyEntry
@@ -35,8 +36,8 @@ android {
         applicationId = "com.ruchitech.cashentery"
         minSdk = 23
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 9
+        versionName = "1.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -121,6 +122,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.camera.core)
+    implementation(libs.firebase.auth)
+    implementation(libs.googleid)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -152,6 +155,10 @@ dependencies {
     implementation(libs.capturable)
     implementation (libs.play.services.ads)
    // implementation ("com.google.android.play:core:1.10.3")
+    implementation ("com.google.android.gms:play-services-auth:21.2.0")
+
+    implementation ("androidx.credentials:credentials:1.2.2")
+    implementation ("androidx.credentials:credentials-play-services-auth:1.2.2")
     //gson
     implementation("com.google.code.gson:gson:2.10.1")
     // retrofit
@@ -159,6 +166,10 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     //OkHttp
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+
+        implementation ("com.google.accompanist:accompanist-navigation-animation:0.31.0-alpha")
+
+
 }
 // Add this to enable annotation processing with Hilt
 kapt {

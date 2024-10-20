@@ -23,6 +23,7 @@ val totalCredits: Double, // 6260
         val CLEARED: Double?, // 4660
         val OVERDUE: Double?, // 0
         val PENDING: Double?, // 100
+        val SWAP: Double?, // 100
         val VOID: Double?, // 1500
     )
 
@@ -35,6 +36,7 @@ val totalCredits: Double, // 6260
         val CLEARED: Double?, // 0
         val OVERDUE: Double?, // 250
         val PENDING: Double?, // 100
+        val SWAP: Double?, // 100
         val VOID: Double?, // 0
     )
 }

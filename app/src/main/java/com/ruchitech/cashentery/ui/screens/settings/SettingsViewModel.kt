@@ -1,5 +1,6 @@
 package com.ruchitech.cashentery.ui.screens.settings
 
+import androidx.compose.runtime.mutableStateOf
 import com.ruchitech.cashentery.helper.SharedViewModel
 import com.ruchitech.cashentery.helper.sharedpreference.AppPreference
 import com.ruchitech.cashentery.retrofit.repository.AccountRepository
@@ -13,5 +14,16 @@ class SettingsViewModel @Inject constructor(
     private val repository: Repository,
     private val accountRepository: AccountRepository,
 ) : SharedViewModel() {
+
+    var default = mutableStateOf(appPreference.currentMonthOnly)
+
+    init {
+
+    }
+
+    fun updateSettings(newValue: Boolean = true) {
+        appPreference.currentMonthOnly = newValue
+    }
+
 
 }

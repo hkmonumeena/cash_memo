@@ -13,7 +13,28 @@
           "package_name": "com.ruchitech.cashentery"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "389443520091-89r3psfhvuo2blhdd0u55kmmck4opp46.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ruchitech.cashentery",
+            "certificate_hash": "c363606bb0b8f774ff3acb0ec39714a7f4611efc"
+          }
+        },
+        {
+          "client_id": "389443520091-kbo9a8hj1dtpaoj1k21qchkogpsgm89k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ruchitech.cashentery",
+            "certificate_hash": "87d291dfd7886e0e8d0cc50bb92429159dd7b6f5"
+          }
+        },
+        {
+          "client_id": "389443520091-amhuljrm8apuio6g2sld7bmk2b05a7qq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBQc_U9ALkQu_X_T2hgSiXNxw1b-MyfMoo"
@@ -21,7 +42,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "389443520091-amhuljrm8apuio6g2sld7bmk2b05a7qq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

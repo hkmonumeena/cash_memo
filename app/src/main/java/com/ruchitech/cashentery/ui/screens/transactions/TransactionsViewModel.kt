@@ -37,15 +37,17 @@ class TransactionsViewModel @Inject constructor(
     val transactionsByDate: StateFlow<TransactionsByDate?> = _transactionsByDate
 
     private val db = FirebaseFirestore.getInstance()
+
     private val _categories =
         MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
+
     val categories: StateFlow<List<String>> = _categories
     val showLoading = mutableStateOf(false)
 
     private val _result = MutableStateFlow<Result?>(null)
     val result: StateFlow<Result?> = _result
 
-    private val _filterTrnx = MutableStateFlow<FilterTrnx>(
+    private val _filterTrnx = MutableStateFlow(
         FilterTrnx(
             account = listOf(), amount = FilterTrnx.Amount(
                 max = 100000.0, min = 0.0
@@ -55,7 +57,6 @@ class TransactionsViewModel @Inject constructor(
         )
     )
     val filterTrnx: StateFlow<FilterTrnx> = _filterTrnx
-
 
     init {
         fetchTransactionsByDate()
@@ -77,10 +78,7 @@ class TransactionsViewModel @Inject constructor(
                         }
 
                         Status.ERROR -> {
-                            Log.e(
-                                "fetchTransactionsByDate",
-                                "fetchTransactionsByDate: ${resources.message}"
-                            )
+                            Log.e("fetchTransactionsByDate", "fetchTransactionsByDate: ${resources.message}")
                         }
 
                         Status.LOADING -> {}
@@ -162,7 +160,6 @@ class TransactionsViewModel @Inject constructor(
             is Event.TransactionsViewModel -> {
                 fetchTransactionsByDate()
             }
-
             else -> {}
         }
     }

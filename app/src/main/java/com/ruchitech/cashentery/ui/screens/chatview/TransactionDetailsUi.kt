@@ -1,6 +1,7 @@
 package com.ruchitech.cashentery.ui.screens.chatview
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -27,8 +28,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,6 +44,8 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -64,9 +69,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
+import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.formatNetBalanceMessage
 import com.ruchitech.cashentery.retrofit.model.TransactionsBytag
+import com.ruchitech.cashentery.retrofit.model.UpdateTag
 import com.ruchitech.cashentery.ui.screens.add_transactions.AmountField
 import com.ruchitech.cashentery.ui.screens.add_transactions.DateField
 import com.ruchitech.cashentery.ui.screens.add_transactions.RemarksField
@@ -105,6 +112,7 @@ fun TransactionDetailsUi(
 ) {
 
     val data by viewModel.transactionsFlow.collectAsState()
+    val userData by viewModel.userData
     val isLoading by viewModel.circularLoadingIndicator.collectAsState()
     val context = LocalContext.current
     (context as MainActivity).lastTagUsed = data?.transactions?.firstOrNull()?.tag
@@ -113,7 +121,7 @@ fun TransactionDetailsUi(
     var dataToEdit by remember { mutableStateOf<Transaction?>(null) }
     val result by viewModel.result.collectAsState()
     val viewPagerState = rememberPagerState(initialPage = 0) { 5 }
-    val tabs = listOf("All", "Cleared", "Pending", "Overdue", "Void")
+    val tabs = listOf("All", "Cleared", "Swap", "Due", "Void")
     val selectedTabIndex = viewPagerState.currentPage
     val scope = rememberCoroutineScope()
     // Memoize filtered transactions
@@ -121,15 +129,16 @@ fun TransactionDetailsUi(
         derivedStateOf {
             when (tabs[selectedTabIndex]) {
                 "Cleared" -> data?.transactions?.filter { it.status == Transaction.Status.CLEARED }
-                "Pending" -> data?.transactions?.filter { it.status == Transaction.Status.PENDING }
-                "Overdue" -> data?.transactions?.filter { it.status == Transaction.Status.OVERDUE }
+                "Swap" -> data?.transactions?.filter { it.status == Transaction.Status.SWAP }
+                "Due" -> data?.transactions?.filter { it.status == Transaction.Status.OVERDUE }
                 "Void" -> data?.transactions?.filter { it.status == Transaction.Status.VOID }
                 else -> data?.transactions // All transactions
             }
         }
     }
     var printAndShare by remember { mutableStateOf(false) }
-
+    var showTagUpdateDialog by remember { mutableStateOf(false) }
+    var updatedText by remember { mutableStateOf("Old Value") }
     LaunchedEffect(key1 = result) {
         when (result) {
             Result.Error -> {}
@@ -150,6 +159,23 @@ fun TransactionDetailsUi(
         }
     }
 
+    if (showTagUpdateDialog) {
+        val oldTagName = data?.transactions?.firstOrNull()?.tag?.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(
+                Locale.getDefault()
+            ) else it.toString()
+        }
+        UpdateDialog(
+            oldTagName,
+            onDismiss = { showTagUpdateDialog = false },
+            onUpdate = { newValue ->
+                updatedText = newValue
+                viewModel.updateTag(UpdateTag(newTagName = newValue, oldTagName = oldTagName ?: ""))
+
+            }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -160,28 +186,44 @@ fun TransactionDetailsUi(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MainBackgroundSurface)
-                    .size(56.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .size(56.dp)
+                    .padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { onBack() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null
-                    )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { onBack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    data?.transactions?.firstOrNull()?.tag?.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.getDefault()
+                        ) else it.toString()
+                    }?.let {
+                        Text(
+                            text = it,
+                            fontFamily = sfMediumFont,
+                            fontSize = 16.sp.nonScaledSp,
+                            color = Color.Black
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-                data?.transactions?.firstOrNull()?.tag?.replaceFirstChar {
-                    if (it.isLowerCase()) it.titlecase(
-                        Locale.getDefault()
-                    ) else it.toString()
-                }?.let {
+                TextButton(onClick = {
+                    showTagUpdateDialog = true
+                }) {
                     Text(
-                        text = it,
+                        text = "Edit Tag",
+                        color = Color.Black,
                         fontFamily = sfMediumFont,
-                        fontSize = 16.sp.nonScaledSp,
-                        color = Color.Black
+                        fontSize = 14.sp.nonScaledSp
                     )
                 }
+
             }
             HorizontalDivider()
             HorizontalPager(
@@ -243,7 +285,7 @@ fun TransactionDetailsUi(
                     ) {
                         Text(
                             text = tab,
-                            fontSize = 16.sp,
+                            fontSize = 16.sp.nonScaledSp,
                             color = Color.Black,
                             modifier = Modifier.padding(vertical = 14.dp),
                             fontWeight = FontWeight.Bold
@@ -253,6 +295,7 @@ fun TransactionDetailsUi(
             }
             Text(
                 text = formatNetBalanceMessage(data?.summary?.netBalance ?: 0.0),
+                fontSize = 14.sp.nonScaledSp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
@@ -307,10 +350,13 @@ fun TransactionDetailsUi(
                         .background(MainBackgroundSurface)
                 ) {
                     dataToEdit?.let {
-                        ReceiptUI(transaction = it, onDismiss = {
-                            printAndShare = false
-                        }, onShareClick = { s, uri ->
-                        }
+                        ReceiptUI(
+                            name = userData?.name,
+                            email = userData?.email,
+                            transaction = it, onDismiss = {
+                                printAndShare = false
+                            }, onShareClick = { s, uri ->
+                            }
                         )
                     }
 
@@ -320,9 +366,11 @@ fun TransactionDetailsUi(
         }
 
         if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier
-                .align(Alignment.Center)
-                .size(60.dp))
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(60.dp)
+            )
         }
 
     }
@@ -361,13 +409,13 @@ fun StatusSummary(summary: TransactionsBytag.Summary?) {
         }
         SpacerHeight(5)
         SummaryStatus(
-            statusLabel = "Pending",
-            income = summary?.creditPending,
-            expense = summary?.debitPending
+            statusLabel = "Swap",
+            income = summary?.creditVoid,
+            expense = summary?.debitSwap
         )
 
         SummaryStatus(
-            statusLabel = "Overdue",
+            statusLabel = "Due",
             income = summary?.creditOverdue,
             expense = summary?.debitOverdue
         )
@@ -461,7 +509,7 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
             Text(
                 text = transaction.remarks ?: "",
                 fontFamily = sfMediumFont,
-                fontSize = 12.sp.nonScaledSp.nonScaledSp,
+                fontSize = 14.sp.nonScaledSp,
                 lineHeight = 14.sp.nonScaledSp,
                 modifier = Modifier.padding(top = 0.dp)
             )
@@ -474,8 +522,9 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                         when (transaction.status) {
                             Transaction.Status.PENDING -> "Pending"
                             Transaction.Status.CLEARED -> "Received on"
-                            Transaction.Status.OVERDUE -> "Overdue"
+                            Transaction.Status.OVERDUE -> "Due"
                             Transaction.Status.VOID -> "Void"
+                            Transaction.Status.SWAP -> "Swap"
                             null -> "Void"
                         }
                     }
@@ -484,8 +533,9 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
                         when (transaction.status) {
                             Transaction.Status.PENDING -> "Pending"
                             Transaction.Status.CLEARED -> "Paid on"
-                            Transaction.Status.OVERDUE -> "Overdue"
+                            Transaction.Status.OVERDUE -> "Due"
                             Transaction.Status.VOID -> "Void"
+                            Transaction.Status.SWAP -> "Swap"
                             null -> "Void"
                         }
                     }
@@ -513,12 +563,17 @@ private fun ChatBox(transaction: Transaction, onClick: () -> Unit, onLongClick: 
 
                         Transaction.Status.OVERDUE -> {
                             statusColor = Color(0xFFF44336)
-                            "Overdue"
+                            "Due"
                         }
 
                         Transaction.Status.VOID -> {
                             statusColor = Color(0xFF9E9E9E)
                             "Void"
+                        }
+
+                        Transaction.Status.SWAP -> {
+                            statusColor = Color(0xFFFF4081)
+                            "Swap"
                         }
 
                         null -> {
@@ -578,20 +633,6 @@ private fun EditTransactionScreen(
             }
         }
 
-        IconButton(
-            onClick = {
-                onBack()
-            },
-            modifier = Modifier
-                .padding(16.dp)
-                .background(TempColor, shape = CircleShape)
-                .align(Alignment.BottomStart)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = null
-            )
-        }
 
         Column(
             modifier = Modifier
@@ -608,26 +649,42 @@ private fun EditTransactionScreen(
             ) {
                 Text(
                     "Update Transaction",
-                    fontSize = 24.sp,
+                    fontSize = 24.sp.nonScaledSp,
                     modifier = Modifier.padding(bottom = 0.dp),
                     fontFamily = montserrat_medium
                 )
 
-                Row {
-                    IconButton(onClick = {
-                        onShare()
-                    }) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = null)
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    Image(
+                        painterResource(id = R.drawable.ic_receipt),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(35.dp)
+                            .padding(2.dp)
+                            .clickable {
+                                onShare()
+                            }
+                    )
+
+                    SpacerWidth(10)
+
+                    Icon(imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = Color(0xFFD50D50),
+                        modifier = Modifier
+                            .size(35.dp)
+                            .clickable {
+                                showDeleteDialog = true
+                            })
+
+                    /*  IconButton(onClick = {
+                          onShare()
+                      }) {
+                          Icon(imageVector = Icons.Default.Share, contentDescription = null)
+                      }*/
                 }
-                Icon(imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    tint = Color(0xFFD50D50),
-                    modifier = Modifier
-                        .size(35.dp)
-                        .clickable {
-                            showDeleteDialog = true
-                        })
+
 
             }
 
@@ -641,20 +698,6 @@ private fun EditTransactionScreen(
                     .background(MainBackgroundSurface)
             ) {
 
-                IconButton(
-                    onClick = {
-                        onBack()
-                    },
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .background(TempColor, shape = CircleShape)
-                        .align(Alignment.BottomStart)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = null
-                    )
-                }
 
                 Column(
                     modifier = Modifier
@@ -739,11 +782,28 @@ private fun EditTransactionScreen(
                     }
                     SpacerHeight(20)
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        SaveButton(newTransaction?.type) {
-                            if (newTransaction?.amount?.isNaN() == false && !newTransaction?.tag.isNullOrEmpty()) {
-                                viewModel.updateTransaction(newTransaction!!)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            SaveButton(newTransaction?.type) {
+                                if (newTransaction?.amount?.isNaN() == false && !newTransaction?.tag.isNullOrEmpty()) {
+                                    viewModel.updateTransaction(newTransaction!!)
+                                }
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    onBack()
+                                },
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .background(TempColor, shape = CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    contentDescription = null
+                                )
                             }
                         }
+
                     }
                 }
             }
@@ -751,4 +811,51 @@ private fun EditTransactionScreen(
         LoadingScreen(showLoading = viewModel.showLoading.value, "Updating transaction...")
 
     }
+}
+
+
+@Composable
+fun UpdateDialog(
+    oldTagName: String?,
+    onDismiss: () -> Unit,
+    onUpdate: (String) -> Unit,
+) {
+    var textState by remember { mutableStateOf(oldTagName ?: "") }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = {
+            Text(text = "Update Tag",fontSize = 14.sp.nonScaledSp,)
+        },
+        text = {
+            Column {
+                Text(text = "Enter the new Tag below:")
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = textState,
+                    onValueChange = { textState = it },
+                    label = { Text("New Tag") },
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (textState.isEmpty() || textState.length < 2) {
+                        return@Button
+                    }
+                    onUpdate(textState) // Call the onUpdate callback with the entered text
+                    onDismiss()
+                }
+            ) {
+                Text("Update")
+            }
+        },
+        dismissButton = {
+            Button(onClick = { onDismiss() }) {
+                Text("Close")
+            }
+        }
+    )
 }

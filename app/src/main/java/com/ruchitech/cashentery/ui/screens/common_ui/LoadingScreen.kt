@@ -30,12 +30,13 @@ import coil.annotation.ExperimentalCoilApi
 import coil.memory.MemoryCache
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.ruchitech.cashentery.R
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable
 fun LoadingScreen(showLoading: Boolean, msg: String = "Adding new transaction...") {
     if (showLoading) {
-        var context = LocalContext.current
+        val context = LocalContext.current
         val imageLoader = ImageLoader.Builder(context)
             .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.25).build() }
             .crossfade(true)
@@ -79,7 +80,7 @@ fun LoadingScreen(showLoading: Boolean, msg: String = "Adding new transaction...
                     Text(
                         text = msg,
                         color = Color.Black,
-                        fontSize = 18.sp,
+                        fontSize = 14.sp.nonScaledSp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp)
                     )

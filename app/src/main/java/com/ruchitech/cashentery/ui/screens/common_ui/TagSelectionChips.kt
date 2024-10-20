@@ -21,6 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -60,6 +62,7 @@ fun TagSelectionChips(
         if (filteredTags.isEmpty()) {
             Text(
                 text = "No tags found",
+                fontSize = 16.sp.nonScaledSp,
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
                 modifier = Modifier.padding(16.dp)
             )
@@ -77,7 +80,7 @@ fun TagSelectionChips(
                             }
                             onTagSelectionChange(selectedItems.value.toList())
                         },
-                        label = { Text(tag) },
+                        label = { Text(tag,fontSize = 14.sp.nonScaledSp,) },
                         leadingIcon = {
                             if (selectedItems.value.contains(tag)) {
                                 Icon(
@@ -90,7 +93,7 @@ fun TagSelectionChips(
                         modifier = Modifier.padding(horizontal = 4.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             containerColor = if (selectedItems.value.contains(tag)) Color(0xFFCCFFCC) else Color.White,
-                            //          selectedContainerColor = Color(0xFFCCFFCC),
+                            // selectedContainerColor = Color(0xFFCCFFCC),
                             selectedLabelColor = Color.Black, labelColor = Color.Gray
                         )
                     )

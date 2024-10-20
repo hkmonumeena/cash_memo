@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 
 @Composable
 fun MultiSelectStatus(
@@ -37,7 +38,7 @@ fun MultiSelectStatus(
                     onCheckedChange = { onStatusSelected(status) }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = status.name, fontSize = 16.sp)
+                Text(text = status.name, fontSize = 16.sp.nonScaledSp,)
             }
         }
     }

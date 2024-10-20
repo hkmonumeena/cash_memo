@@ -14,6 +14,7 @@ import com.ruchitech.cashentery.retrofit.remote.Status
 import com.ruchitech.cashentery.retrofit.repository.AccountRepository
 import com.ruchitech.cashentery.ui.screens.Repository
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
+import com.ruchitech.cashentery.ui.screens.mobile_auth.data.CreateUser
 import com.ruchitech.cashentery.ui.screens.transactions.FilterTrnx
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,9 @@ class HomeViewModel @Inject constructor(
     private val _trxnTags = MutableStateFlow<Tags?>(null)
     val trxnTags: StateFlow<Tags?> = _trxnTags
 
+    private val _userData = MutableStateFlow<CreateUser?>(null)
+    val userData: StateFlow<CreateUser?> = _userData
+
     private val _sumOfExpense = MutableStateFlow<Double?>(0.0)
     val sumOfExpense: StateFlow<Double?> = _sumOfExpense
 
@@ -63,7 +67,6 @@ class HomeViewModel @Inject constructor(
     private val _categories =
         MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
     val categories: StateFlow<List<String>> = _categories
-
 
 
     private val _filterTrnx = MutableStateFlow<FilterTrnx>(
@@ -80,8 +83,18 @@ class HomeViewModel @Inject constructor(
 
     init {
         val (start, end) = getCurrentMonthStartAndEndDate()
-        _filterTrnx.value.date.start = start
-        _filterTrnx.value.date.end = end
+        if (appPreference.currentMonthOnly) {
+            /*            _filterTrnx.value.date.start = start
+                        _filterTrnx.value.date.end = end*/
+            _filterTrnx.value.date.start = ""
+            _filterTrnx.value.date.end = ""
+        } else {
+            _filterTrnx.value.date.start = ""
+            _filterTrnx.value.date.end = ""
+        }
+
+
+        _userData.value = appPreference.userData
 
         fetchMongoDbSummaryTrnx()
     }
@@ -131,6 +144,7 @@ class HomeViewModel @Inject constructor(
                             val tags = resources.data
                             tags?.sortByTagName()
                             appPreference.categoriesList = tags?.map { it.tag } ?: emptyList()
+                            _categories.value = appPreference.categoriesList
                             _trxnTags.value = tags
                         }
 
@@ -148,33 +162,31 @@ class HomeViewModel @Inject constructor(
     }
 
 
-     fun deleteAccount(onDelete:()->Unit) {
+    fun deleteAccount(onDelete: () -> Unit) {
         viewModelScope.launch {
-            accountRepository.deleteAccount().distinctUntilChanged()
-                .collectLatest { resources ->
-                    when (resources.status) {
-                        Status.INITIAL -> Unit
-                        Status.EMPTY -> Unit
-                        Status.SUCCESS -> {
-                            hideLoading()
-                            signout()
-                        }
+            accountRepository.deleteAccount().distinctUntilChanged().collectLatest { resources ->
+                when (resources.status) {
+                    Status.INITIAL -> Unit
+                    Status.EMPTY -> Unit
+                    Status.SUCCESS -> {
+                        hideLoading()
+                        signout()
+                    }
 
-                        Status.ERROR -> {
-                            hideLoading()
-                            signout()
-                            onDelete()
-                            Log.e("Gdfgfdgf", "fetchMongoDbTags: ${resources.message}")
-                        }
+                    Status.ERROR -> {
+                        hideLoading()
+                        signout()
+                        onDelete()
+                        Log.e("Gdfgfdgf", "fetchMongoDbTags: ${resources.message}")
+                    }
 
-                        Status.LOADING -> {
-                            showLoading()
-                        }
+                    Status.LOADING -> {
+                        showLoading()
                     }
                 }
+            }
         }
     }
-
 
 
     fun getFilteredTransactions(trnx: FilterTrnx) {
@@ -185,8 +197,10 @@ class HomeViewModel @Inject constructor(
 
     fun signout() {
         auth.signOut()
+        appPreference.clearData()
         appPreference.isUserLoggedIn = false
         appPreference.userId = null
+        appPreference.categoriesList = emptyList()
     }
 
 

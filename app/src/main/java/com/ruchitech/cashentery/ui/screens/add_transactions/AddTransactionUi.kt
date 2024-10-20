@@ -35,9 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.ruchitech.cashentery.MainActivity
+import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.Result
 import com.ruchitech.cashentery.helper.getInitialTransaction
-import com.ruchitech.cashentery.helper.getRandomQuote
 import com.ruchitech.cashentery.ui.screens.common_ui.LoadingScreen
 import com.ruchitech.cashentery.ui.screens.common_ui.PaymentTypeSwitch
 import com.ruchitech.cashentery.ui.screens.common_ui.ReceiptUI
@@ -48,11 +48,11 @@ import com.ruchitech.cashentery.ui.screens.common_ui.TransactionStatusSwitch
 import com.ruchitech.cashentery.ui.theme.MainBackgroundSurface
 import com.ruchitech.cashentery.ui.theme.TempColor
 import com.ruchitech.cashentery.ui.theme.montserrat_medium
-import com.ruchitech.cashentery.R
 
 
 @Composable
 fun AddTransactionUi(
+    type : Int,
     viewModel: AddTransactionViewModel,
     onSuccess: () -> Unit,
     onBack: () -> Unit,
@@ -70,19 +70,22 @@ fun AddTransactionUi(
         }
     }
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        AddTransactionScreen(viewModel, onBack)
+        AddTransactionScreen(type,viewModel, onBack)
         LoadingScreen(showLoading = viewModel.showLoading.value)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () -> Unit) {
+private fun AddTransactionScreen(type: Int,viewModel: AddTransactionViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     var newTransaction by remember {
-        mutableStateOf(getInitialTransaction().copy(tag = (context as MainActivity).lastTagUsed))
+        mutableStateOf(getInitialTransaction().copy(tag = (context as MainActivity).lastTagUsed, type = if (type==2) Transaction.Type.DEBIT else Transaction.Type.CREDIT))
     }
+
     val tags by viewModel.categories.collectAsState()
+    val userData by viewModel.userData
+
     var printAndShare by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
@@ -174,7 +177,7 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                 ) {
                     PaymentTypeSwitch(
                         modifier = Modifier,
-                        initialType = Transaction.Type.DEBIT
+                        initialType =if (type==2) Transaction.Type.DEBIT else Transaction.Type.CREDIT
                     ) { type, _ ->
                         newTransaction = newTransaction.copy(type = type)
                     }
@@ -238,10 +241,13 @@ private fun AddTransactionScreen(viewModel: AddTransactionViewModel, onBack: () 
                         .fillMaxSize()
                         .background(MainBackgroundSurface)
                 ) {
-                    ReceiptUI(transaction = newTransaction, onDismiss = {
-                        printAndShare = false
-                    }, onShareClick = { s, uri ->
-                    }
+                    ReceiptUI(
+                        name = userData?.name,
+                        email = userData?.email,
+                        transaction = newTransaction, onDismiss = {
+                            printAndShare = false
+                        }, onShareClick = { s, uri ->
+                        }
                     )
 
                 }

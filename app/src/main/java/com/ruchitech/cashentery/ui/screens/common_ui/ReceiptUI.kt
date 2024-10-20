@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
-import com.ruchitech.cashentery.MainActivity
 import com.ruchitech.cashentery.helper.getCurrentDateWithTime
 import com.ruchitech.cashentery.helper.numberToWords
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
@@ -64,6 +64,8 @@ import java.io.FileOutputStream
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeApi::class)
 @Composable
 fun ReceiptUI(
+    name: String? = "",
+    email: String? = "",
     transaction: Transaction,
     onShareClick: (String, Uri) -> Unit,
     onDismiss: () -> Unit,
@@ -82,7 +84,7 @@ fun ReceiptUI(
         mutableStateOf(
             ReceiptSettings(
                 showName = true,
-                showMobile = true,
+                showEmail = true,
                 showTxnID = true,
                 showDate = true,
                 showTag = true,
@@ -125,7 +127,7 @@ fun ReceiptUI(
 
                 if (settings.showName) {
                     Text(
-                        text = "Cash Entry",
+                        text = name ?: "Cash Entry",
                         fontSize = 18.sp.nonScaledSp,
                         fontWeight = FontWeight.Normal,
                         fontFamily = FontFamily.SansSerif,
@@ -134,10 +136,19 @@ fun ReceiptUI(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                if (settings.showMobile) {
+                if (settings.showEmail && !email.isNullOrEmpty()) {
                     SpacerHeight(4)
+                    /*Text(
+                        text = "Email: ",
+                        fontSize = 14.sp.nonScaledSp,
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = FontFamily.Monospace,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )*/
                     Text(
-                        text = "Mobile: ",
+                        text = "Email: $email",
                         fontSize = 14.sp.nonScaledSp,
                         fontWeight = FontWeight.Normal,
                         fontFamily = FontFamily.Monospace,
@@ -146,15 +157,15 @@ fun ReceiptUI(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                Text(
-                    text = "Email: ",
-                    fontSize = 14.sp.nonScaledSp,
-                    fontWeight = FontWeight.Normal,
-                    fontFamily = FontFamily.Monospace,
-                    color = Color.Black,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                /*       Text(
+                           text = "Email: ",
+                           fontSize = 14.sp.nonScaledSp,
+                           fontWeight = FontWeight.Normal,
+                           fontFamily = FontFamily.Monospace,
+                           color = Color.Black,
+                           textAlign = TextAlign.Center,
+                           modifier = Modifier.fillMaxWidth()
+                       )*/
                 SpacerHeight(8)
                 DividerLineStars()
                 // Receipt Details
@@ -196,7 +207,9 @@ fun ReceiptUI(
                     fontFamily = FontFamily.SansSerif,
                     color = Color.Black,
                     textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp)
                 )
                 SpacerHeight(8)
                 DividerLine()
@@ -248,9 +261,11 @@ fun ReceiptUI(
             }
         }
 
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceAround) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceAround
+        ) {
             Button(
                 onClick = {
                     captureNow = true
@@ -260,9 +275,15 @@ fun ReceiptUI(
                             bitmap = bitmapAsync.await()
                             // Do something with `bitmap`.
                             bitmap?.let {
-                                transaction.id?.let { id -> shareReceipt(context, it, id) }
+                                shareReceipt(
+                                    context,
+                                    it,
+                                    transaction.id ?: "${Math.random().toInt()}"
+                                )
+                               // transaction.id?.let { id -> shareReceipt(context, it, id) }
                             }
                         } catch (error: Throwable) {
+                            Log.e("jhgufuio", "ReceiptUI: ${error.message}")
                             // Handle error
                         } finally {
                             captureNow = false
@@ -401,7 +422,7 @@ private fun receiptTextStyle() = TextStyle(
 // Data class to hold settings state
 data class ReceiptSettings(
     val showName: Boolean = true,
-    val showMobile: Boolean = true,
+    val showEmail: Boolean = true,
     val showTxnID: Boolean = true,
     val showDate: Boolean = true,
     val showTag: Boolean = true,
@@ -409,7 +430,7 @@ data class ReceiptSettings(
     val showAccount: Boolean = true,
     val showStatus: Boolean = true,
     val showRemarks: Boolean = true,
-    val showCreatedDate: Boolean = true
+    val showCreatedDate: Boolean = true,
 )
 
 // Settings dialog implementation
@@ -417,7 +438,7 @@ data class ReceiptSettings(
 fun SettingsDialog(
     settings: ReceiptSettings,
     onDismiss: () -> Unit,
-    onSave: (ReceiptSettings) -> Unit
+    onSave: (ReceiptSettings) -> Unit,
 ) {
     var localSettings by remember { mutableStateOf(settings) }
 
@@ -437,16 +458,36 @@ fun SettingsDialog(
                 )
                 SpacerHeight(16)
 
-                CheckboxRow("Show Name", localSettings.showName) { localSettings = localSettings.copy(showName = it) }
-                CheckboxRow("Show Mobile", localSettings.showMobile) { localSettings = localSettings.copy(showMobile = it) }
-                CheckboxRow("Show Transaction ID", localSettings.showTxnID) { localSettings = localSettings.copy(showTxnID = it) }
-                CheckboxRow("Show Date", localSettings.showDate) { localSettings = localSettings.copy(showDate = it) }
-                CheckboxRow("Show Tag", localSettings.showTag) { localSettings = localSettings.copy(showTag = it) }
-                CheckboxRow("Show Type", localSettings.showType) { localSettings = localSettings.copy(showType = it) }
-                CheckboxRow("Show Account", localSettings.showAccount) { localSettings = localSettings.copy(showAccount = it) }
-                CheckboxRow("Show Status", localSettings.showStatus) { localSettings = localSettings.copy(showStatus = it) }
-                CheckboxRow("Show Remarks", localSettings.showRemarks) { localSettings = localSettings.copy(showRemarks = it) }
-                CheckboxRow("Show Created Date", localSettings.showCreatedDate) { localSettings = localSettings.copy(showCreatedDate = it) }
+                CheckboxRow("Show Name", localSettings.showName) {
+                    localSettings = localSettings.copy(showName = it)
+                }
+                CheckboxRow("Show Email", localSettings.showEmail) {
+                    localSettings = localSettings.copy(showEmail = it)
+                }
+                CheckboxRow("Show Transaction ID", localSettings.showTxnID) {
+                    localSettings = localSettings.copy(showTxnID = it)
+                }
+                CheckboxRow("Show Date", localSettings.showDate) {
+                    localSettings = localSettings.copy(showDate = it)
+                }
+                CheckboxRow("Show Tag", localSettings.showTag) {
+                    localSettings = localSettings.copy(showTag = it)
+                }
+                CheckboxRow("Show Type", localSettings.showType) {
+                    localSettings = localSettings.copy(showType = it)
+                }
+                CheckboxRow("Show Account", localSettings.showAccount) {
+                    localSettings = localSettings.copy(showAccount = it)
+                }
+                CheckboxRow("Show Status", localSettings.showStatus) {
+                    localSettings = localSettings.copy(showStatus = it)
+                }
+                CheckboxRow("Show Remarks", localSettings.showRemarks) {
+                    localSettings = localSettings.copy(showRemarks = it)
+                }
+                CheckboxRow("Show Created Date", localSettings.showCreatedDate) {
+                    localSettings = localSettings.copy(showCreatedDate = it)
+                }
 
                 SpacerHeight(16)
 
@@ -475,7 +516,6 @@ fun CheckboxRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> U
         Text(text = label, fontSize = 16.sp)
     }
 }
-
 
 
 private fun shareReceipt(context: Context, imageBitmap: ImageBitmap, transactionId: String) {

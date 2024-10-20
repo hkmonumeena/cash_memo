@@ -6,6 +6,8 @@ import com.ruchitech.cashentery.retrofit.model.TransactionsByDate
 import com.ruchitech.cashentery.retrofit.model.TransactionsBytag
 import com.ruchitech.cashentery.retrofit.model.TrnxCrudResponse
 import com.ruchitech.cashentery.retrofit.model.TrnxSummary
+import com.ruchitech.cashentery.retrofit.model.UpdateTag
+import com.ruchitech.cashentery.retrofit.model.UpdatedTagResponse
 import com.ruchitech.cashentery.ui.screens.add_transactions.Transaction
 import com.ruchitech.cashentery.ui.screens.chatview.TrxnByTagRes
 import com.ruchitech.cashentery.ui.screens.mobile_auth.data.CreateUser
@@ -27,6 +29,7 @@ interface AppService {
         private const val DELETE_TRANSACTION= "/api/transactions/delete/"
         private const val FILTER_TRANSACTION= "/api/transactions/filterTransactions"
         private const val TRANSACTIONS_BY_TAG= "/api/transactions/byTag"
+        private const val UPDATE_TAG_NAME= "/api/update_tag"
     }
 
     @POST(CREATE_USER)
@@ -55,6 +58,9 @@ interface AppService {
 
     @POST(DELETE_TRANSACTION)
     fun deleteTransaction(@Query("id") id: String): Flow<ApiResponse<TrnxCrudResponse>>
+
+    @POST(UPDATE_TAG_NAME)
+    fun updateTagName(@Body updateTag: UpdateTag): Flow<ApiResponse<UpdatedTagResponse>>
 
 
 

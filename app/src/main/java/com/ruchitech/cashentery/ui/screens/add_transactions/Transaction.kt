@@ -110,7 +110,12 @@ data class Transaction(
          * The transaction has been completed successfully.
          */
         CLEARED,
-
+        /**
+         * Use when money has been credited to you, and you owe the person back.
+         * This status won’t change even after you repay — the app will automatically adjust the total balance based on all transactions.
+         * Example: Rohit gave you ₹1,000. You owe him until you repay, but repayment will be tracked separately.
+         */
+        SWAP,
         /**
          * The transaction is overdue and requires attention.
          */

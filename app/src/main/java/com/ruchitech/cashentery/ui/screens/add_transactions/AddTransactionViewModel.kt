@@ -45,7 +45,7 @@ class AddTransactionViewModel @Inject constructor(
     private val _categories =
         MutableStateFlow(appPreference.categoriesList.ifEmpty { arrayListOf() })
     val categories: StateFlow<List<String>> = _categories
-
+    val userData = mutableStateOf(appPreference.userData)
     var quoteOfTheTrnx = mutableStateOf("")
 
     init {
@@ -100,13 +100,12 @@ class AddTransactionViewModel @Inject constructor(
                                     EventEmitter postEvent Event.TransactionDetailsViewModel(
                                         transaction = transaction
                                     )
-                                    delay(1200)
+                                    delay(500)
                                     EventEmitter postEvent Event.HomeViewModel(
                                         refreshPage = true
                                     )
-                                    delay(1400)
+                                    delay(800)
                                     EventEmitter postEvent Event.TransactionsViewModel(refreshPage = true)
-                                    delay(2000)
                                     showLoading.value = false
                                     _result.value = Result.Success
                                 }

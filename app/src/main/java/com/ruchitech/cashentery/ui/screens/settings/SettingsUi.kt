@@ -4,18 +4,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.Alignment
 
 // Enum to represent the transaction view type
 enum class TransactionViewType(val displayName: String) {
@@ -31,23 +31,35 @@ enum class TransactionViewType(val displayName: String) {
  */
 @Composable
 fun SettingsUi(
-    selectedViewType: TransactionViewType,
-    onOptionSelected: (TransactionViewType) -> Unit
+    viewModel: SettingsViewModel,
+    onBack: () -> Unit,
 ) {
+    val selectedViewType by remember { mutableStateOf(if (viewModel.default.value) TransactionViewType.CurrentMonth else TransactionViewType.Overall) }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         // Title of the settings screen
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Row(modifier = Modifier.height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+
+            IconButton(onClick = { onBack() }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = null,
+                    modifier = Modifier.size(35.dp)
+                )
+            }
+
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
 
         // Card for transaction view type selection
         Card(
@@ -68,7 +80,7 @@ fun SettingsUi(
                 )
 
                 // Loop through the view types and create radio buttons with icons
-                TransactionViewType.values().forEach { viewType ->
+                TransactionViewType.entries.forEach { viewType ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -76,11 +88,11 @@ fun SettingsUi(
                             .padding(vertical = 8.dp)
                             .selectable(
                                 selected = (viewType == selectedViewType),
-                                onClick = { onOptionSelected(viewType) }
+                                onClick = { viewModel.updateSettings(viewType == TransactionViewType.CurrentMonth) }
                             )
                     ) {
                         Icon(
-                            imageVector = if (viewType == TransactionViewType.CurrentMonth) Icons.Filled.DateRange else Icons.Filled.List,
+                            imageVector = if (viewType == TransactionViewType.CurrentMonth) Icons.Filled.DateRange else Icons.AutoMirrored.Filled.List,
                             contentDescription = null,
                             tint = if (viewType == selectedViewType) MaterialTheme.colorScheme.primary else Color.Gray,
                             modifier = Modifier.size(24.dp)
@@ -88,7 +100,7 @@ fun SettingsUi(
                         Spacer(modifier = Modifier.width(8.dp))
                         RadioButton(
                             selected = (viewType == selectedViewType),
-                            onClick = { onOptionSelected(viewType) }
+                            onClick = { viewModel.updateSettings(viewType == TransactionViewType.CurrentMonth) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -99,7 +111,7 @@ fun SettingsUi(
                             )
                         )
                     }
-                    Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
+                    HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
                 }
             }
         }
@@ -111,8 +123,8 @@ fun SettingsUi(
 fun SettingsUiPreview() {
     var selectedViewType by remember { mutableStateOf(TransactionViewType.CurrentMonth) }
 
-    SettingsUi(
-        selectedViewType = selectedViewType,
-        onOptionSelected = { selectedViewType = it }
-    )
+    /*    SettingsUi(
+            selectedViewType = selectedViewType,
+            onOptionSelected = { selectedViewType = it }
+        )*/
 }

@@ -187,7 +187,7 @@ fun TransactionUi(viewModel: TransactionsViewModel, onBack: () -> Unit) {
                 showBottomSheet = !showBottomSheet
             },
             isFilteredData
-            )/*
+        )/*
                 TabRow(modifier = Modifier,
                     selectedTabIndex = selectedTabIndex,
                     containerColor = MainBackgroundSurface,
@@ -615,7 +615,7 @@ private fun EditTransactionScreen(
             ) {
                 Text(
                     "Update Transaction",
-                    fontSize = 24.sp,
+                    fontSize = 14.sp.nonScaledSp,
                     modifier = Modifier.padding(bottom = 0.dp),
                     fontFamily = montserrat_medium
                 )
@@ -639,20 +639,6 @@ private fun EditTransactionScreen(
                     .background(MainBackgroundSurface)
             ) {
 
-                IconButton(
-                    onClick = {
-                        onBack()
-                    },
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .background(TempColor, shape = CircleShape)
-                        .align(Alignment.BottomStart)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = null
-                    )
-                }
 
                 Column(
                     modifier = Modifier
@@ -735,9 +721,24 @@ private fun EditTransactionScreen(
                     }
                     SpacerHeight(20)
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        SaveButton(newTransaction?.type) {
-                            if (newTransaction?.amount?.isNaN() == false && !newTransaction?.tag.isNullOrEmpty()) {
-                                viewModel.updateTransaction(newTransaction!!)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            SaveButton(newTransaction?.type) {
+                                if (newTransaction?.amount?.isNaN() == false && !newTransaction?.tag.isNullOrEmpty()) {
+                                    viewModel.updateTransaction(newTransaction!!)
+                                }
+                            }
+                            IconButton(
+                                onClick = {
+                                    onBack()
+                                },
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .background(TempColor, shape = CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    contentDescription = null
+                                )
                             }
                         }
                     }

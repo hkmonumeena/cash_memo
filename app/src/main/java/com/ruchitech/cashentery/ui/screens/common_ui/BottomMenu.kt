@@ -69,10 +69,14 @@ fun BottomMenu(
                 .fillMaxSize(0.8F)
         ) {
             val menuItems = listOf(
-                MenuItemData(
+      /*          MenuItemData(
                     text = "Profile",
                     icon = R.drawable.ic_profile
-                ),
+                ),*/
+              /*  MenuItemData(
+                    text = "Settings",
+                    icon =R.drawable.ic_settings
+                ),*/
                 MenuItemData(
                     text = "Terms and Conditions",
                     icon = R.drawable.terms_cond

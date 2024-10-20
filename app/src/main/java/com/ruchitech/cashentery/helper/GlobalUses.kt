@@ -1,6 +1,8 @@
 package com.ruchitech.cashentery.helper
 
 import android.content.Context
+import android.util.Log
+import androidx.compose.ui.graphics.Color
 import com.ruchitech.cashentery.BuildConfig.BASE_URL
 import com.ruchitech.cashentery.R
 import com.ruchitech.cashentery.helper.navigation.Screen
@@ -203,12 +205,16 @@ fun calculateSum(
  */
 fun hideTransactionButton(destinationId: String?): Boolean {
     val hiddenScreens = setOf(
+        Screen.SplashScreen::class.qualifiedName,
         Screen.MobileAuth::class.qualifiedName,
         Screen.VerifyOtp::class.qualifiedName,
-        Screen.AddTransaction::class.qualifiedName
+        Screen.AddTransaction::class.qualifiedName,
+        Screen.SignInGoogle::class.qualifiedName,
+        Screen.Settings::class.qualifiedName,
+        Screen.Home::class.qualifiedName
     )
     // Extract the current route from the destination ID and check if it is in the hidden screens set
-    return destinationId?.split("/")?.firstOrNull()?.let { it in hiddenScreens } ?: false
+    return destinationId?.split("?")?.firstOrNull()?.let { it in hiddenScreens } ?: false
 }
 
 
@@ -327,6 +333,22 @@ fun getCurrentMonthStartAndEndDate(): Pair<String, String> {
     val formattedEndOfMonth = dateFormat.format(endOfMonth)
 
     return Pair(formattedStartOfMonth, formattedEndOfMonth)
+}
+
+fun generateContrastColorForWhiteText(): Color {
+    val random = java.util.Random()
+    // Generate dark or high-contrast colors for white text
+    val red = random.nextFloat() * 0.7f  // Limit brightness of red to 70%
+    val green = random.nextFloat() * 0.7f  // Limit brightness of green to 70%
+    val blue = random.nextFloat() * 0.7f  // Limit brightness of blue to 70%
+    val alpha = 0.8f // Optional: You can tweak alpha for translucency
+
+    return Color(
+        red = red,
+        green = green,
+        blue = blue,
+        alpha = alpha
+    )
 }
 
 

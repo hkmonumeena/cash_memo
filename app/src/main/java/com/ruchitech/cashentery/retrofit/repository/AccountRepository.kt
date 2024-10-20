@@ -9,6 +9,8 @@ import com.ruchitech.cashentery.retrofit.model.TransactionsByDate
 import com.ruchitech.cashentery.retrofit.model.TransactionsBytag
 import com.ruchitech.cashentery.retrofit.model.TrnxCrudResponse
 import com.ruchitech.cashentery.retrofit.model.TrnxSummary
+import com.ruchitech.cashentery.retrofit.model.UpdateTag
+import com.ruchitech.cashentery.retrofit.model.UpdatedTagResponse
 import com.ruchitech.cashentery.retrofit.remote.AppService
 import com.ruchitech.cashentery.retrofit.remote.Resource
 import com.ruchitech.cashentery.retrofit.repository.resource.networkOnlyResource
@@ -83,6 +85,12 @@ class AccountRepository
         return networkOnlyResource(fetchFromRemote = {
             appService.transactionByTag(trxnByTagRes)
         }, shouldFetchFromRemote = { repoListRateLimit.shouldFetch("transactionsByTag") })
+    }
+
+    fun updateTag(updateTag: UpdateTag): Flow<Resource<UpdatedTagResponse>> {
+        return networkOnlyResource(fetchFromRemote = {
+            appService.updateTagName(updateTag)
+        }, shouldFetchFromRemote = { repoListRateLimit.shouldFetch("${Date()}transactionsByTag") })
     }
 
 }

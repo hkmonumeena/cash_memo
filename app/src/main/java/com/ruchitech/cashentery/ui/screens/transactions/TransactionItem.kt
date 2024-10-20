@@ -95,6 +95,11 @@ fun TransactionItem(item: Transaction, onClick: () -> Unit, onLongClick: () -> U
                         "Void"
                     }
 
+                    Transaction.Status.SWAP -> {
+                        statusColor = Color(0xFF40C4FF)
+                        "Swap"
+                    }
+
                     null -> {
                         statusColor = Color(0xFF4CAF50)
                         "Cleared"

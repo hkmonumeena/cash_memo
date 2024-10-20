@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruchitech.cashentery.ui.screens.home.formatToINR
+import com.ruchitech.cashentery.ui.theme.nonScaledSp
 import com.ruchitech.cashentery.ui.theme.sfSemibold
 
 @Composable
@@ -53,30 +54,44 @@ fun TransactionStatusTable(
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 modifier = Modifier.weight(0.6F),
                 textAlign = TextAlign.Center,
+                fontSize = 12.sp.nonScaledSp,
                 color = Color.White
             )
-            Text(
+         /*   Text(
                 text = "PENDING",
+                fontSize = 12.sp.nonScaledSp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 color = Color.White
-            )
+            )*/
+
             Text(
                 text = "CLEARED",
+                fontSize = 12.sp.nonScaledSp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 color = Color.White
             )
             Text(
-                text = "OVERDUE",
+                text = "SWAP",
+                fontSize = 12.sp.nonScaledSp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 color = Color.White
             )
             Text(
+                text = "DUE",
+                fontSize = 12.sp.nonScaledSp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                color = Color.White
+            )
+            Text(
+                fontSize = 12.sp.nonScaledSp,
                 text = "VOID",
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 modifier = Modifier.weight(1f),
@@ -98,34 +113,35 @@ fun TransactionStatusTable(
         ) {
             Text(
                 text = "Credit",
-                fontSize = 14.sp,
+                fontSize = 12.sp.nonScaledSp,
                 fontFamily = sfSemibold,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                 modifier = Modifier
                     .weight(0.6F)
-                    .padding(start = 12.dp),
+                    .padding(start = 5.dp),
                 textAlign = TextAlign.Start,
                 color = Color(0xFF4A4A4A)
             )
             Text(
-                text = formatToINR(creditPending ?: 0.0),
-                fontSize = 12.sp,
+                text = formatToINR(creditCleared ?: 0.0),
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,
                 color = Color(0xFF4A4A4A)
             )
             Text(
-                text = formatToINR(creditCleared ?: 0.0),
-                fontSize = 12.sp,
+                text = formatToINR(creditPending ?: 0.0),
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,
                 color = Color(0xFF4A4A4A)
             )
+
             Text(
                 text = formatToINR(creditOverdue ?: 0.0),
-                fontSize = 12.sp,
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,
@@ -133,7 +149,7 @@ fun TransactionStatusTable(
             )
             Text(
                 text = formatToINR(creditVoid?: 0.0),
-                fontSize = 12.sp,
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,
@@ -154,34 +170,35 @@ fun TransactionStatusTable(
         ) {
             Text(
                 text = "Debit",
-                fontSize = 14.sp,
+                fontSize = 12.sp.nonScaledSp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                 fontFamily = sfSemibold,
                 modifier = Modifier
                     .weight(0.6F)
-                    .padding(start = 12.dp),
+                    .padding(start = 5.dp),
                 textAlign = TextAlign.Start,
                 color = Color(0xFF4A4A4A)
             )
             Text(
-                text = formatToINR(debtPending ?: 0.0),
-                fontSize = 12.sp,
+                text = formatToINR(debtCleared ?: 0.0),
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,
                 color = Color(0xFF4A4A4A)
             )
             Text(
-                text = formatToINR(debtCleared ?: 0.0),
-                fontSize = 12.sp,
+                text = formatToINR(debtPending ?: 0.0),
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,
                 color = Color(0xFF4A4A4A)
             )
+
             Text(
                 text = formatToINR(debtOverdue ?: 0.0),
-                fontSize = 12.sp,
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,
@@ -189,7 +206,7 @@ fun TransactionStatusTable(
             )
             Text(
                 text = formatToINR(debtVoid ?: 0.0),
-                fontSize = 12.sp,
+                fontSize = 12.sp.nonScaledSp,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontFamily = sfSemibold,

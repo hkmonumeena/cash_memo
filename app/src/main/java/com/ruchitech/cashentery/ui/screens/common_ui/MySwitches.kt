@@ -156,6 +156,7 @@ fun TransactionStatusSwitch(
             Transaction.Status.CLEARED -> 2
             Transaction.Status.OVERDUE -> 3
             Transaction.Status.VOID -> 4
+            Transaction.Status.SWAP -> 5
         })
     }
     Row(
@@ -184,7 +185,30 @@ fun TransactionStatusSwitch(
                 modifier = Modifier.padding(10.dp)
             )
         }
+
         Box(
+            modifier = Modifier
+                .background(
+                    if (accountType==5) Color(0xFF4CAF50).copy(alpha = 0.8F) else Color(0xFFDACB9F),
+                    shape = RoundedCornerShape(10.dp)
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    accountType = 5
+                    onTypeChange(Transaction.Status.SWAP, "SWAP")
+                }) {
+            Text(
+                text = "SWAP",
+                fontSize = 14.sp.nonScaledSp,
+                fontFamily = montserrat_semibold,
+                modifier = Modifier.padding(10.dp)
+            )
+        }
+
+
+        /*Box(
             modifier = Modifier
                 .background(
                     if (accountType==1) Color(0xFFFF9800).copy(alpha = 0.8F) else Color(0xFFDACB9F),
@@ -203,7 +227,7 @@ fun TransactionStatusSwitch(
                 modifier = Modifier.padding(10.dp),
                 fontFamily = montserrat_semibold,
             )
-        }
+        }*/
         Box(
             modifier = Modifier
                 .background(
@@ -218,7 +242,7 @@ fun TransactionStatusSwitch(
                     onTypeChange(Transaction.Status.OVERDUE, "OVERDUE")
                 }) {
             Text(
-                text = "OVERDUE",
+                text = "DUE",
                 fontSize = 14.sp.nonScaledSp,
                 modifier = Modifier.padding(10.dp),
                 fontFamily = montserrat_semibold,
